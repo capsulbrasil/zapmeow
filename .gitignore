@@ -1,0 +1,5 @@
+data.db
+storage
+.env
+.env.production
+main
