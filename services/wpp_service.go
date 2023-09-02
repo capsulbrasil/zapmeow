@@ -18,25 +18,30 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-type WppService struct {
+type wppService struct {
 	app            *configs.App
 	messageService MessageService
 	accountService AccountService
+}
+
+type WppService interface {
+	GetInstance(instanceID string) (*whatsmeow.Client, error)
+	GetAuthenticatedInstance(instanceID string) (*whatsmeow.Client, error)
 }
 
 func NewWppService(
 	app *configs.App,
 	messageService MessageService,
 	accountService AccountService,
-) *WppService {
-	return &WppService{
+) *wppService {
+	return &wppService{
 		app:            app,
 		messageService: messageService,
 		accountService: accountService,
 	}
 }
 
-func (w *WppService) GetInstance(instanceID string) (*whatsmeow.Client, error) {
+func (w *wppService) GetInstance(instanceID string) (*whatsmeow.Client, error) {
 	instance, ok := w.app.Instances[instanceID]
 
 	if ok && instance != nil {
@@ -69,7 +74,7 @@ func (w *WppService) GetInstance(instanceID string) (*whatsmeow.Client, error) {
 	return w.app.Instances[instanceID], nil
 }
 
-func (w *WppService) GetAuthenticatedInstance(instanceID string) (*whatsmeow.Client, error) {
+func (w *wppService) GetAuthenticatedInstance(instanceID string) (*whatsmeow.Client, error) {
 	instance, err := w.GetInstance(instanceID)
 	if err != nil {
 		return nil, err
@@ -86,7 +91,7 @@ func (w *WppService) GetAuthenticatedInstance(instanceID string) (*whatsmeow.Cli
 	return instance, nil
 }
 
-func (w *WppService) getClient(instanceID string) (*whatsmeow.Client, error) {
+func (w *wppService) getClient(instanceID string) (*whatsmeow.Client, error) {
 	account, err := w.accountService.GetAccountByInstanceID(instanceID)
 	if err != nil {
 		return nil, err
@@ -128,7 +133,7 @@ func (w *WppService) getClient(instanceID string) (*whatsmeow.Client, error) {
 	return createClient(device), nil
 }
 
-func (w *WppService) qrcode(instanceID string) {
+func (w *wppService) qrcode(instanceID string) {
 	client := w.app.Instances[instanceID]
 	if client.Store.ID == nil {
 		qrChan, err := client.GetQRChannel(context.Background())
@@ -173,7 +178,7 @@ func (w *WppService) qrcode(instanceID string) {
 	}
 }
 
-func (w *WppService) eventHandler(instanceID string, rawEvt interface{}) {
+func (w *wppService) eventHandler(instanceID string, rawEvt interface{}) {
 	switch evt := rawEvt.(type) {
 	case *events.Message:
 		w.handleMessage(instanceID, evt)
@@ -186,7 +191,7 @@ func (w *WppService) eventHandler(instanceID string, rawEvt interface{}) {
 	}
 }
 
-func (w *WppService) handleHistorySync(instanceID string, evt *events.HistorySync) {
+func (w *wppService) handleHistorySync(instanceID string, evt *events.HistorySync) {
 	history, _ := proto.Marshal(evt.Data)
 
 	queue := queues.NewHistorySyncQueue(w.app)
@@ -200,7 +205,7 @@ func (w *WppService) handleHistorySync(instanceID string, evt *events.HistorySyn
 	}
 }
 
-func (w *WppService) handleConnected(instanceID string) {
+func (w *wppService) handleConnected(instanceID string) {
 	var instance = w.app.Instances[instanceID]
 	err := w.accountService.UpdateAccount(instanceID, map[string]interface{}{
 		"User":       instance.Store.ID.User,
@@ -220,7 +225,7 @@ func (w *WppService) handleConnected(instanceID string) {
 	}
 }
 
-func (w *WppService) handleLoggedOut(instanceID string) {
+func (w *wppService) handleLoggedOut(instanceID string) {
 	instance := w.app.Instances[instanceID]
 
 	_, err := w.accountService.GetAccountByInstanceID(instanceID)
@@ -242,7 +247,7 @@ func (w *WppService) handleLoggedOut(instanceID string) {
 	delete(w.app.Instances, instanceID)
 }
 
-func (w *WppService) handleMessage(instanceId string, evt *events.Message) {
+func (w *wppService) handleMessage(instanceId string, evt *events.Message) {
 	instance := w.app.Instances[instanceId]
 	message := w.messageService.Parse(instance, evt)
 
