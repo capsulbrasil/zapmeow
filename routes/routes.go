@@ -16,22 +16,44 @@ func SetupRouter(
 ) *gin.Engine {
 	router := gin.Default()
 
-	whatsappController := controllers.NewWhatsAppController(
-		app,
+	getQrCodeController := controllers.NewGetQrCodeController(
 		wppService,
 		messageService,
 		accountService,
 	)
+	getStatusController := controllers.NewGetStatusController(
+		wppService,
+		accountService,
+	)
+	checkPhonesController := controllers.NewCheckPhonesController(
+		wppService,
+	)
+	getMessagesController := controllers.NewGetMessagesController(
+		wppService,
+		messageService,
+	)
+	sendTextMessageController := controllers.NewSendTextMessageController(
+		wppService,
+		messageService,
+	)
+	sendImageMessageController := controllers.NewSendImageMessageController(
+		wppService,
+		messageService,
+	)
+	sendAudioMessageController := controllers.NewSendAudioMessageController(
+		wppService,
+		messageService,
+	)
 
 	group := router.Group("/api")
 
-	group.GET("/:instanceId/qrcode", whatsappController.GetQrcode)
-	group.GET("/:instanceId/status", whatsappController.GetStatus)
-	group.POST("/:instanceId/check/phones", whatsappController.CheckPhones)
-	group.POST("/:instanceId/chat/messages", whatsappController.GetMessages)
-	group.POST("/:instanceId/chat/send/text", whatsappController.SendTextMessage)
-	group.POST("/:instanceId/chat/send/image", whatsappController.SendImageMessage)
-	group.POST("/:instanceId/chat/send/audio", whatsappController.SendAudioMessage)
+	group.GET("/:instanceId/qrcode", getQrCodeController.Handler)
+	group.GET("/:instanceId/status", getStatusController.Handler)
+	group.POST("/:instanceId/check/phones", checkPhonesController.Handler)
+	group.POST("/:instanceId/chat/messages", getMessagesController.Handler)
+	group.POST("/:instanceId/chat/send/text", sendTextMessageController.Handler)
+	group.POST("/:instanceId/chat/send/image", sendImageMessageController.Handler)
+	group.POST("/:instanceId/chat/send/audio", sendAudioMessageController.Handler)
 
 	return router
 }
