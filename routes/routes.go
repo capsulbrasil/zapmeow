@@ -3,7 +3,6 @@ package routes
 import (
 	"zapmeow/configs"
 	"zapmeow/controllers"
-	"zapmeow/repositories"
 	"zapmeow/services"
 
 	"github.com/gin-gonic/gin"
@@ -13,8 +12,7 @@ func SetupRouter(
 	app *configs.App,
 	wppService services.WppService,
 	messageService services.MessageService,
-	accountRepo repositories.AccountRepository,
-	messageRepo repositories.MessageRepository,
+	accountService services.AccountService,
 ) *gin.Engine {
 	router := gin.Default()
 
@@ -22,8 +20,7 @@ func SetupRouter(
 		app,
 		wppService,
 		messageService,
-		accountRepo,
-		messageRepo,
+		accountService,
 	)
 
 	group := router.Group("/api")

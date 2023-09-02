@@ -13,18 +13,18 @@ type HistorySyncQueueData struct {
 	History    []byte
 }
 
-type HistorySyncQueue struct {
+type historySyncQueue struct {
 	client *redis.Client
 	app    *configs.App
 }
 
-func NewHistorySyncQueue(app *configs.App) *HistorySyncQueue {
-	return &HistorySyncQueue{
+func NewHistorySyncQueue(app *configs.App) *historySyncQueue {
+	return &historySyncQueue{
 		app: app,
 	}
 }
 
-func (q *HistorySyncQueue) Enqueue(item HistorySyncQueueData) error {
+func (q *historySyncQueue) Enqueue(item HistorySyncQueueData) error {
 	jsonData, err := json.Marshal(item)
 	if err != nil {
 		return err
@@ -33,7 +33,7 @@ func (q *HistorySyncQueue) Enqueue(item HistorySyncQueueData) error {
 	return q.app.RedisClient.LPush(q.app.Config.QueueName, jsonData).Err()
 }
 
-func (q *HistorySyncQueue) Dequeue() (*HistorySyncQueueData, error) {
+func (q *historySyncQueue) Dequeue() (*HistorySyncQueueData, error) {
 	result, err := q.app.RedisClient.RPop(q.app.Config.QueueName).Bytes()
 	if err != nil {
 		if err == redis.Nil {

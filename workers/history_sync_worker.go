@@ -7,7 +7,6 @@ import (
 	"zapmeow/configs"
 	"zapmeow/models"
 	"zapmeow/queues"
-	"zapmeow/repositories"
 	"zapmeow/services"
 	"zapmeow/utils"
 
@@ -16,28 +15,25 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-type HistorySyncWorker struct {
-	messageService services.MessageService
-	accountRepo    repositories.AccountRepository
-	messageRepo    repositories.MessageRepository
+type historySyncWorker struct {
 	app            *configs.App
+	messageService services.MessageService
+	accountService services.AccountService
 }
 
 func NewHistorySyncWorker(
 	app *configs.App,
 	messageService services.MessageService,
-	accountRepo repositories.AccountRepository,
-	messageRepo repositories.MessageRepository,
-) *HistorySyncWorker {
-	return &HistorySyncWorker{
+	accountService services.AccountService,
+) *historySyncWorker {
+	return &historySyncWorker{
 		messageService: messageService,
-		accountRepo:    accountRepo,
-		messageRepo:    messageRepo,
+		accountService: accountService,
 		app:            app,
 	}
 }
 
-func (q *HistorySyncWorker) ProcessQueue() {
+func (q *historySyncWorker) ProcessQueue() {
 	queue := queues.NewHistorySyncQueue(q.app)
 
 	defer q.app.Wg.Done()
@@ -63,14 +59,14 @@ func (q *HistorySyncWorker) ProcessQueue() {
 			}
 
 			instance := q.app.Instances[data.InstanceID]
-			account, err := q.accountRepo.GetAccountByInstanceID(data.InstanceID)
+			account, err := q.accountService.GetAccountByInstanceID(data.InstanceID)
 			if err != nil {
 				fmt.Println(err)
 				continue
 			}
 
 			if !account.WasSynced {
-				err = q.accountRepo.UpdateAccount(account.InstanceID, map[string]interface{}{
+				err = q.accountService.UpdateAccount(account.InstanceID, map[string]interface{}{
 					"WasSynced": true,
 				})
 				if err != nil {
@@ -83,7 +79,7 @@ func (q *HistorySyncWorker) ProcessQueue() {
 			for _, conv := range evt.GetConversations() {
 				chatJID, _ := types.ParseJID(conv.GetId())
 
-				count, err := q.messageRepo.CountMessages(account.User, chatJID.User)
+				count, err := q.messageService.CountChatMessages(account.User, chatJID.User)
 				if err != nil {
 					fmt.Println(err)
 					continue
@@ -111,7 +107,7 @@ func (q *HistorySyncWorker) ProcessQueue() {
 				}
 			}
 
-			err = q.messageRepo.CreateMessages(&messages)
+			err = q.messageService.CreateMessages(&messages)
 			if err != nil {
 				fmt.Println(err)
 			}

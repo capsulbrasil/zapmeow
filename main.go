@@ -82,35 +82,33 @@ func main() {
 	)
 
 	// repositories
-	accountRepo := repositories.NewDatabaseAccountRepository(app.DatabaseClient)
-	messageRepo := repositories.NewDatabaseMessageRepository(app.DatabaseClient)
+	messageRepo := repositories.NewMessageRepository(app.DatabaseClient)
+	accountRepo := repositories.NewAccountRepository(app.DatabaseClient)
 
 	// services
-	messageService := services.NewMessageService()
+	messageService := services.NewMessageService(messageRepo)
+	accountService := services.NewAccountService(accountRepo)
 	wppService := services.NewWppService(
 		app,
-		*messageService,
-		accountRepo,
-		messageRepo,
+		messageService,
+		accountService,
 	)
 
 	// workers
 	historySyncWorker := workers.NewHistorySyncWorker(
 		app,
-		*messageService,
+		messageService,
 		accountRepo,
-		messageRepo,
 	)
 
 	r := routes.SetupRouter(
 		app,
 		*wppService,
-		*messageService,
-		accountRepo,
-		messageRepo,
+		messageService,
+		accountService,
 	)
 
-	accounts, err := accountRepo.GetAccounts()
+	accounts, err := accountService.GetConnectedAccounts()
 	fmt.Println("loading instances...")
 	if err != nil {
 		fmt.Println("[accounts]: ", err)

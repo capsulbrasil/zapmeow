@@ -7,6 +7,7 @@ import (
 	"mime"
 	"path/filepath"
 	"zapmeow/models"
+	"zapmeow/repositories"
 	"zapmeow/utils"
 
 	"go.mau.fi/whatsmeow"
@@ -14,13 +15,114 @@ import (
 	"go.mau.fi/whatsmeow/types/events"
 )
 
-type MessageService struct{}
-
-func NewMessageService() *MessageService {
-	return &MessageService{}
+type MessageService interface {
+	CreateMessage(message *models.Message) error
+	CreateMessages(messages *[]models.Message) error
+	GetChatMessages(chatJID string, meJID string) (*[]models.Message, error)
+	CountChatMessages(chatJID string, meJID string) (int64, error)
+	DeleteMessagesByChatJID(chatJID string) error
+	Parse(instance *whatsmeow.Client, msg *events.Message) *models.Message
+	ToJSON(message models.Message) map[string]interface{}
 }
 
-func (m *MessageService) downloadMessageMedia(message *waProto.Message, instance *whatsmeow.Client, fileName string) (string, string) {
+type messageService struct {
+	messageRep repositories.MessageRepository
+}
+
+func NewMessageService(messageRep repositories.MessageRepository) *messageService {
+	return &messageService{
+		messageRep: messageRep,
+	}
+}
+
+func (m *messageService) CreateMessage(message *models.Message) error {
+	return m.messageRep.CreateMessage(message)
+}
+
+func (m *messageService) CreateMessages(messages *[]models.Message) error {
+	return m.messageRep.CreateMessages(messages)
+}
+
+func (m *messageService) GetChatMessages(chatJID string, meJID string) (*[]models.Message, error) {
+	return m.messageRep.GetChatMessages(chatJID, meJID)
+}
+
+func (m *messageService) CountChatMessages(chatJID string, meJID string) (int64, error) {
+	return m.messageRep.CountChatMessages(chatJID, meJID)
+}
+
+func (m *messageService) DeleteMessagesByChatJID(chatJID string) error {
+	return m.messageRep.DeleteMessagesByChatJID(chatJID)
+}
+
+func (m *messageService) Parse(instance *whatsmeow.Client, msg *events.Message) *models.Message {
+	mediaType, path := m.downloadMessageMedia(
+		msg.Message,
+		instance,
+		msg.Info.ID,
+	)
+
+	var body = m.getTextMessage(msg.Message)
+	if mediaType == "" && body == "" {
+		return nil
+	}
+
+	if mediaType != "" {
+		return &models.Message{
+			MeJID:     instance.Store.ID.User,
+			MessageID: msg.Info.ID,
+			FromMe:    msg.Info.MessageSource.IsFromMe,
+			ChatJID:   msg.Info.Chat.User,
+			SenderJID: msg.Info.Sender.User,
+			Body:      body,
+			MediaPath: mediaType,
+			MediaType: path,
+			Timestamp: msg.Info.Timestamp,
+		}
+	}
+
+	return &models.Message{
+		MeJID:     instance.Store.ID.User,
+		MessageID: msg.Info.ID,
+		FromMe:    msg.Info.MessageSource.IsFromMe,
+		ChatJID:   msg.Info.Chat.User,
+		SenderJID: msg.Info.Sender.User,
+		Body:      body,
+		Timestamp: msg.Info.Timestamp,
+	}
+}
+
+func (m *messageService) ToJSON(message models.Message) map[string]interface{} {
+	messageJson := map[string]interface{}{
+		"ID":        message.ID,
+		"Sender":    message.SenderJID,
+		"Chat":      message.ChatJID,
+		"Me":        message.MeJID,
+		"MessageID": message.MessageID,
+		"FromMe":    message.FromMe,
+		"Timestamp": message.Timestamp,
+		"Body":      message.Body,
+		"MediaType": message.MediaType,
+	}
+
+	if message.MediaType != "" {
+		data, err := ioutil.ReadFile(message.MediaPath)
+		if err != nil {
+			fmt.Println(err)
+		} else {
+			mimetype := mime.TypeByExtension(filepath.Ext(message.MediaPath))
+			base64 := base64.StdEncoding.EncodeToString(data)
+			messageJson["MediaData"] = map[string]interface{}{
+				"Mimetype": mimetype,
+				"Base64":   base64,
+			}
+		}
+	}
+
+	return messageJson
+}
+
+func (m *messageService) downloadMessageMedia(message *waProto.Message, instance *whatsmeow.Client, fileName string) (string, string) {
 	path := ""
 	mediaType := ""
 
@@ -134,77 +236,10 @@ func (m *MessageService) downloadMessageMedia(message *waProto.Message, instance
 	return "", ""
 }
 
-func (m *MessageService) getTextMessage(message *waProto.Message) string {
+func (m *messageService) getTextMessage(message *waProto.Message) string {
 	extendedTextMessage := message.GetExtendedTextMessage()
 	if extendedTextMessage != nil {
 		return *extendedTextMessage.Text
 	}
 	return message.GetConversation()
-}
-
-func (m *MessageService) Parse(instance *whatsmeow.Client, msg *events.Message) *models.Message {
-	mediaType, path := m.downloadMessageMedia(
-		msg.Message,
-		instance,
-		msg.Info.ID,
-	)
-
-	var body = m.getTextMessage(msg.Message)
-	if mediaType == "" && body == "" {
-		return nil
-	}
-
-	if mediaType != "" {
-		return &models.Message{
-			MeJID:     instance.Store.ID.User,
-			MessageID: msg.Info.ID,
-			FromMe:    msg.Info.MessageSource.IsFromMe,
-			ChatJID:   msg.Info.Chat.User,
-			SenderJID: msg.Info.Sender.User,
-			Body:      body,
-			MediaPath: mediaType,
-			MediaType: path,
-			Timestamp: msg.Info.Timestamp,
-		}
-	}
-
-	return &models.Message{
-		MeJID:     instance.Store.ID.User,
-		MessageID: msg.Info.ID,
-		FromMe:    msg.Info.MessageSource.IsFromMe,
-		ChatJID:   msg.Info.Chat.User,
-		SenderJID: msg.Info.Sender.User,
-		Body:      body,
-		Timestamp: msg.Info.Timestamp,
-	}
-}
-
-func (m *MessageService) ToJSON(message models.Message) map[string]interface{} {
-	messageJson := map[string]interface{}{
-		"ID":        message.ID,
-		"Sender":    message.SenderJID,
-		"Chat":      message.ChatJID,
-		"Me":        message.MeJID,
-		"MessageID": message.MessageID,
-		"FromMe":    message.FromMe,
-		"Timestamp": message.Timestamp,
-		"Body":      message.Body,
-		"MediaType": message.MediaType,
-	}
-
-	if message.MediaType != "" {
-		data, err := ioutil.ReadFile(message.MediaPath)
-		if err != nil {
-			fmt.Println(err)
-		} else {
-			mimetype := mime.TypeByExtension(filepath.Ext(message.MediaPath))
-			base64 := base64.StdEncoding.EncodeToString(data)
-			messageJson["MediaData"] = map[string]interface{}{
-				"Mimetype": mimetype,
-				"Base64":   base64,
-			}
-		}
-	}
-
-	return messageJson
 }

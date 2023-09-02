@@ -5,7 +5,6 @@ import (
 	"mime"
 	"zapmeow/configs"
 	"zapmeow/models"
-	"zapmeow/repositories"
 	"zapmeow/services"
 	"zapmeow/utils"
 
@@ -16,31 +15,28 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-type WhatsAppController struct {
+type whatsAppController struct {
 	app            *configs.App
 	wppService     services.WppService
 	messageService services.MessageService
-	accountRepo    repositories.AccountRepository
-	messageRepo    repositories.MessageRepository
+	accountService services.AccountService
 }
 
 func NewWhatsAppController(
 	app *configs.App,
 	wppService services.WppService,
 	messageService services.MessageService,
-	accountRepo repositories.AccountRepository,
-	messageRepo repositories.MessageRepository,
-) *WhatsAppController {
-	return &WhatsAppController{
+	accountService services.AccountService,
+) *whatsAppController {
+	return &whatsAppController{
 		wppService:     wppService,
 		messageService: messageService,
+		accountService: accountService,
 		app:            app,
-		accountRepo:    accountRepo,
-		messageRepo:    messageRepo,
 	}
 }
 
-func (wc *WhatsAppController) GetQrcode(c *gin.Context) {
+func (wc *whatsAppController) GetQrcode(c *gin.Context) {
 	instanceID := c.Param("instanceId")
 
 	_, err := wc.wppService.GetInstance(instanceID)
@@ -49,7 +45,7 @@ func (wc *WhatsAppController) GetQrcode(c *gin.Context) {
 		return
 	}
 
-	account, err := wc.accountRepo.GetAccountByInstanceID(instanceID)
+	account, err := wc.accountService.GetAccountByInstanceID(instanceID)
 	if err != nil {
 		utils.RespondInternalServerError(c, err.Error())
 		return
@@ -65,7 +61,7 @@ func (wc *WhatsAppController) GetQrcode(c *gin.Context) {
 	})
 }
 
-func (wc *WhatsAppController) GetStatus(c *gin.Context) {
+func (wc *whatsAppController) GetStatus(c *gin.Context) {
 	instanceID := c.Param("instanceId")
 
 	instance, err := wc.wppService.GetInstance(instanceID)
@@ -74,7 +70,7 @@ func (wc *WhatsAppController) GetStatus(c *gin.Context) {
 		return
 	}
 
-	account, err := wc.accountRepo.GetAccountByInstanceID(instanceID)
+	account, err := wc.accountService.GetAccountByInstanceID(instanceID)
 	if err != nil {
 		utils.RespondInternalServerError(c, err.Error())
 		return
@@ -99,7 +95,7 @@ func (wc *WhatsAppController) GetStatus(c *gin.Context) {
 	})
 }
 
-func (wc *WhatsAppController) CheckPhones(c *gin.Context) {
+func (wc *whatsAppController) CheckPhones(c *gin.Context) {
 	type Body struct {
 		Phones []string
 	}
@@ -143,7 +139,7 @@ func (wc *WhatsAppController) CheckPhones(c *gin.Context) {
 	})
 }
 
-func (wc *WhatsAppController) GetMessages(c *gin.Context) {
+func (wc *whatsAppController) GetMessages(c *gin.Context) {
 	type Body struct {
 		Phone string
 	}
@@ -161,7 +157,7 @@ func (wc *WhatsAppController) GetMessages(c *gin.Context) {
 		return
 	}
 
-	messages, err := wc.messageRepo.GetMessages(
+	messages, err := wc.messageService.GetChatMessages(
 		instance.Store.ID.User,
 		body.Phone,
 	)
@@ -180,7 +176,7 @@ func (wc *WhatsAppController) GetMessages(c *gin.Context) {
 	})
 }
 
-func (wc *WhatsAppController) SendTextMessage(c *gin.Context) {
+func (wc *whatsAppController) SendTextMessage(c *gin.Context) {
 	type Body struct {
 		Phone string
 		Text  string
@@ -227,7 +223,7 @@ func (wc *WhatsAppController) SendTextMessage(c *gin.Context) {
 		MessageID: resp.ID,
 	}
 
-	err = wc.messageRepo.CreateMessage(&message)
+	err = wc.messageService.CreateMessage(&message)
 	if err != nil {
 		utils.RespondInternalServerError(c, err.Error())
 		return
@@ -238,7 +234,7 @@ func (wc *WhatsAppController) SendTextMessage(c *gin.Context) {
 	})
 }
 
-func (wc *WhatsAppController) SendImageMessage(c *gin.Context) {
+func (wc *whatsAppController) SendImageMessage(c *gin.Context) {
 	type Body struct {
 		Phone  string
 		Base64 string
@@ -328,7 +324,7 @@ func (wc *WhatsAppController) SendImageMessage(c *gin.Context) {
 		MessageID: resp.ID,
 	}
 
-	err = wc.messageRepo.CreateMessage(&message)
+	err = wc.messageService.CreateMessage(&message)
 	if err != nil {
 		utils.RespondInternalServerError(c, err.Error())
 		return
@@ -339,7 +335,7 @@ func (wc *WhatsAppController) SendImageMessage(c *gin.Context) {
 	})
 }
 
-func (wc *WhatsAppController) SendAudioMessage(c *gin.Context) {
+func (wc *whatsAppController) SendAudioMessage(c *gin.Context) {
 	type Body struct {
 		Phone  string
 		Base64 string
@@ -429,7 +425,7 @@ func (wc *WhatsAppController) SendAudioMessage(c *gin.Context) {
 		MessageID: resp.ID,
 	}
 
-	err = wc.messageRepo.CreateMessage(&message)
+	err = wc.messageService.CreateMessage(&message)
 	if err != nil {
 		utils.RespondInternalServerError(c, err.Error())
 		return

@@ -8,30 +8,30 @@ import (
 
 type AccountRepository interface {
 	CreateAccount(account *models.Account) error
-	GetAccounts() ([]models.Account, error)
+	GetConnectedAccounts() ([]models.Account, error)
 	GetAccountByInstanceID(instanceID string) (*models.Account, error)
 	UpdateAccount(instanceID string, data map[string]interface{}) error
 }
 
-type DatabaseAccountRepository struct {
+type accountRepository struct {
 	db *gorm.DB
 }
 
-func NewDatabaseAccountRepository(db *gorm.DB) *DatabaseAccountRepository {
-	return &DatabaseAccountRepository{db: db}
+func NewAccountRepository(db *gorm.DB) *accountRepository {
+	return &accountRepository{db: db}
 }
 
-func (repo *DatabaseAccountRepository) CreateAccount(account *models.Account) error {
+func (repo *accountRepository) CreateAccount(account *models.Account) error {
 	return repo.db.Create(account).Error
 }
 
-func (repo *DatabaseAccountRepository) GetAccounts() ([]models.Account, error) {
+func (repo *accountRepository) GetConnectedAccounts() ([]models.Account, error) {
 	var accounts []models.Account
 	repo.db.Where("status = ?", "CONNECTED").Find(&accounts)
 	return accounts, nil
 }
 
-func (repo *DatabaseAccountRepository) GetAccountByInstanceID(instanceID string) (*models.Account, error) {
+func (repo *accountRepository) GetAccountByInstanceID(instanceID string) (*models.Account, error) {
 	var account models.Account
 	result := repo.db.Where("instance_id = ?", instanceID).First(&account)
 	if result.Error != nil {
@@ -43,7 +43,7 @@ func (repo *DatabaseAccountRepository) GetAccountByInstanceID(instanceID string)
 	return &account, nil
 }
 
-func (repo *DatabaseAccountRepository) UpdateAccount(instanceID string, data map[string]interface{}) error {
+func (repo *accountRepository) UpdateAccount(instanceID string, data map[string]interface{}) error {
 	var account models.Account
 	if result := repo.db.Where("instance_id = ?", instanceID).First(&account); result.Error != nil {
 		return result.Error

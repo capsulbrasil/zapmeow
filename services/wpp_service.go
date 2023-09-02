@@ -8,7 +8,6 @@ import (
 	"zapmeow/configs"
 	"zapmeow/models"
 	"zapmeow/queues"
-	"zapmeow/repositories"
 	"zapmeow/utils"
 
 	"go.mau.fi/whatsmeow"
@@ -22,21 +21,18 @@ import (
 type WppService struct {
 	app            *configs.App
 	messageService MessageService
-	accountRepo    repositories.AccountRepository
-	messageRepo    repositories.MessageRepository
+	accountService AccountService
 }
 
 func NewWppService(
 	app *configs.App,
 	messageService MessageService,
-	accountRepo repositories.AccountRepository,
-	messageRepo repositories.MessageRepository,
+	accountService AccountService,
 ) *WppService {
 	return &WppService{
 		app:            app,
 		messageService: messageService,
-		accountRepo:    accountRepo,
-		messageRepo:    messageRepo,
+		accountService: accountService,
 	}
 }
 
@@ -91,13 +87,13 @@ func (w *WppService) GetAuthenticatedInstance(instanceID string) (*whatsmeow.Cli
 }
 
 func (w *WppService) getClient(instanceID string) (*whatsmeow.Client, error) {
-	account, err := w.accountRepo.GetAccountByInstanceID(instanceID)
+	account, err := w.accountService.GetAccountByInstanceID(instanceID)
 	if err != nil {
 		return nil, err
 	}
 
 	if account == nil {
-		err := w.accountRepo.CreateAccount(&models.Account{
+		err := w.accountService.CreateAccount(&models.Account{
 			InstanceID: instanceID,
 		})
 
@@ -153,7 +149,7 @@ func (w *WppService) qrcode(instanceID string) {
 					return
 				case "timeout":
 					fmt.Println("[qrcode]: timeout error")
-					err := w.accountRepo.UpdateAccount(instanceID, map[string]interface{}{
+					err := w.accountService.UpdateAccount(instanceID, map[string]interface{}{
 						"QrCode": "",
 						"Status": "TIMEOUT",
 					})
@@ -163,7 +159,7 @@ func (w *WppService) qrcode(instanceID string) {
 
 					delete(w.app.Instances, instanceID)
 				case "code":
-					w.accountRepo.UpdateAccount(instanceID, map[string]interface{}{
+					w.accountService.UpdateAccount(instanceID, map[string]interface{}{
 						"QrCode":    evt.Code,
 						"Status":    "UNPAIRED",
 						"WasSynced": false,
@@ -206,7 +202,7 @@ func (w *WppService) handleHistorySync(instanceID string, evt *events.HistorySyn
 
 func (w *WppService) handleConnected(instanceID string) {
 	var instance = w.app.Instances[instanceID]
-	err := w.accountRepo.UpdateAccount(instanceID, map[string]interface{}{
+	err := w.accountService.UpdateAccount(instanceID, map[string]interface{}{
 		"User":       instance.Store.ID.User,
 		"Agent":      instance.Store.ID.Agent,
 		"Device":     instance.Store.ID.Device,
@@ -227,13 +223,13 @@ func (w *WppService) handleConnected(instanceID string) {
 func (w *WppService) handleLoggedOut(instanceID string) {
 	instance := w.app.Instances[instanceID]
 
-	_, err := w.accountRepo.GetAccountByInstanceID(instanceID)
+	_, err := w.accountService.GetAccountByInstanceID(instanceID)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	err = w.accountRepo.UpdateAccount(instanceID, map[string]interface{}{
+	err = w.accountService.UpdateAccount(instanceID, map[string]interface{}{
 		"Status": "UNPAIRED",
 	})
 
@@ -254,7 +250,7 @@ func (w *WppService) handleMessage(instanceId string, evt *events.Message) {
 		return
 	}
 
-	err := w.messageRepo.CreateMessage(message)
+	err := w.messageService.CreateMessage(message)
 	if err != nil {
 		fmt.Println(err)
 	}
