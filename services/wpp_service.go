@@ -19,18 +19,18 @@ import (
 )
 
 type wppService struct {
-	app            *configs.App
+	app            *configs.ZapMeow
 	messageService MessageService
 	accountService AccountService
 }
 
 type WppService interface {
-	GetInstance(instanceID string) (*whatsmeow.Client, error)
-	GetAuthenticatedInstance(instanceID string) (*whatsmeow.Client, error)
+	GetInstance(instanceID string) (*configs.Instance, error)
+	GetAuthenticatedInstance(instanceID string) (*configs.Instance, error)
 }
 
 func NewWppService(
-	app *configs.App,
+	app *configs.ZapMeow,
 	messageService MessageService,
 	accountService AccountService,
 ) *wppService {
@@ -41,7 +41,7 @@ func NewWppService(
 	}
 }
 
-func (w *wppService) GetInstance(instanceID string) (*whatsmeow.Client, error) {
+func (w *wppService) GetInstance(instanceID string) (*configs.Instance, error) {
 	instance, ok := w.app.Instances[instanceID]
 
 	if ok && instance != nil {
@@ -53,20 +53,23 @@ func (w *wppService) GetInstance(instanceID string) (*whatsmeow.Client, error) {
 		return nil, err
 	}
 
-	w.app.Instances[instanceID] = client
-	w.app.Instances[instanceID].AddEventHandler(func(evt interface{}) {
+	w.app.Instances[instanceID] = &configs.Instance{
+		ID:     instanceID,
+		Client: client,
+	}
+	w.app.Instances[instanceID].Client.AddEventHandler(func(evt interface{}) {
 		w.eventHandler(instanceID, evt)
 	})
 
-	if w.app.Instances[instanceID].Store.ID == nil {
+	if w.app.Instances[instanceID].Client.Store.ID == nil {
 		go w.qrcode(instanceID)
 	} else {
-		err := w.app.Instances[instanceID].Connect()
+		err := w.app.Instances[instanceID].Client.Connect()
 		if err != nil {
 			return nil, err
 		}
 
-		if !w.app.Instances[instanceID].WaitForConnection(5 * time.Second) {
+		if !w.app.Instances[instanceID].Client.WaitForConnection(5 * time.Second) {
 			return nil, errors.New("websocket didn't reconnect within 5 seconds of failed")
 		}
 	}
@@ -74,17 +77,17 @@ func (w *wppService) GetInstance(instanceID string) (*whatsmeow.Client, error) {
 	return w.app.Instances[instanceID], nil
 }
 
-func (w *wppService) GetAuthenticatedInstance(instanceID string) (*whatsmeow.Client, error) {
+func (w *wppService) GetAuthenticatedInstance(instanceID string) (*configs.Instance, error) {
 	instance, err := w.GetInstance(instanceID)
 	if err != nil {
 		return nil, err
 	}
 
-	if !instance.IsConnected() {
+	if !instance.Client.IsConnected() {
 		return nil, errors.New("instance not connected")
 	}
 
-	if !instance.IsLoggedIn() {
+	if !instance.Client.IsLoggedIn() {
 		return nil, errors.New("inauthenticated instance")
 	}
 
@@ -134,15 +137,15 @@ func (w *wppService) getClient(instanceID string) (*whatsmeow.Client, error) {
 }
 
 func (w *wppService) qrcode(instanceID string) {
-	client := w.app.Instances[instanceID]
-	if client.Store.ID == nil {
-		qrChan, err := client.GetQRChannel(context.Background())
+	instance := w.app.Instances[instanceID]
+	if instance.Client.Store.ID == nil {
+		qrChan, err := instance.Client.GetQRChannel(context.Background())
 		if err != nil {
 			if !errors.Is(err, whatsmeow.ErrQRStoreContainsID) {
 				fmt.Println("failed to get qr channel")
 			}
 		} else {
-			err = client.Connect()
+			err = instance.Client.Connect()
 			if err != nil {
 				fmt.Println("[qrcode]: ", err)
 				return
@@ -208,14 +211,14 @@ func (w *wppService) handleHistorySync(instanceID string, evt *events.HistorySyn
 func (w *wppService) handleConnected(instanceID string) {
 	var instance = w.app.Instances[instanceID]
 	err := w.accountService.UpdateAccount(instanceID, map[string]interface{}{
-		"User":       instance.Store.ID.User,
-		"Agent":      instance.Store.ID.Agent,
-		"Device":     instance.Store.ID.Device,
-		"Server":     instance.Store.ID.Server,
-		"AD":         instance.Store.ID.AD,
+		"User":       instance.Client.Store.ID.User,
+		"Agent":      instance.Client.Store.ID.Agent,
+		"Device":     instance.Client.Store.ID.Device,
+		"Server":     instance.Client.Store.ID.Server,
+		"AD":         instance.Client.Store.ID.AD,
+		"InstanceID": instance.ID,
 		"Status":     "CONNECTED",
 		"QrCode":     "",
-		"InstanceID": instanceID,
 		"WasSynced":  false,
 	})
 
@@ -243,7 +246,7 @@ func (w *wppService) handleLoggedOut(instanceID string) {
 		return
 	}
 
-	instance.Disconnect()
+	instance.Client.Disconnect()
 	delete(w.app.Instances, instanceID)
 }
 

@@ -16,13 +16,17 @@ import (
 )
 
 type historySyncWorker struct {
-	app            *configs.App
+	app            *configs.ZapMeow
 	messageService services.MessageService
 	accountService services.AccountService
 }
 
+type HistorySyncWorker interface {
+	ProcessQueue()
+}
+
 func NewHistorySyncWorker(
-	app *configs.App,
+	app *configs.ZapMeow,
 	messageService services.MessageService,
 	accountService services.AccountService,
 ) *historySyncWorker {
@@ -79,7 +83,7 @@ func (q *historySyncWorker) ProcessQueue() {
 			for _, conv := range evt.GetConversations() {
 				chatJID, _ := types.ParseJID(conv.GetId())
 
-				count, err := q.messageService.CountChatMessages(account.User, chatJID.User)
+				count, err := q.messageService.CountChatMessages(account.InstanceID, chatJID.User)
 				if err != nil {
 					fmt.Println(err)
 					continue
@@ -91,15 +95,15 @@ func (q *historySyncWorker) ProcessQueue() {
 
 				var historySyncMsgs = conv.GetMessages()
 				sort.Slice(historySyncMsgs, func(i, j int) bool {
-					message1, _ := instance.ParseWebMessage(chatJID, historySyncMsgs[i].GetMessage())
-					message2, _ := instance.ParseWebMessage(chatJID, historySyncMsgs[j].GetMessage())
+					message1, _ := instance.Client.ParseWebMessage(chatJID, historySyncMsgs[i].GetMessage())
+					message2, _ := instance.Client.ParseWebMessage(chatJID, historySyncMsgs[j].GetMessage())
 					return message1.Info.Timestamp.After(message2.Info.Timestamp)
 				})
 
 				var limit = utils.Min(q.app.Config.MessageLimit, len(historySyncMsgs))
 				var slice = historySyncMsgs[:limit]
 				for _, historySyncMsg := range slice {
-					eventMessage, _ := instance.ParseWebMessage(chatJID, historySyncMsg.GetMessage())
+					eventMessage, _ := instance.Client.ParseWebMessage(chatJID, historySyncMsg.GetMessage())
 					message := q.messageService.Parse(instance, eventMessage)
 					if message != nil {
 						messages = append(messages, *message)

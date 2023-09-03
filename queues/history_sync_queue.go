@@ -15,10 +15,15 @@ type HistorySyncQueueData struct {
 
 type historySyncQueue struct {
 	client *redis.Client
-	app    *configs.App
+	app    *configs.ZapMeow
 }
 
-func NewHistorySyncQueue(app *configs.App) *historySyncQueue {
+type HistorySyncQueue interface {
+	Enqueue(item HistorySyncQueueData) error
+	Dequeue() (*HistorySyncQueueData, error)
+}
+
+func NewHistorySyncQueue(app *configs.ZapMeow) *historySyncQueue {
 	return &historySyncQueue{
 		app: app,
 	}

@@ -12,7 +12,6 @@ import (
 
 	"github.com/go-redis/redis"
 	"github.com/joho/godotenv"
-	"go.mau.fi/whatsmeow"
 	"go.mau.fi/whatsmeow/store/sqlstore"
 	waLog "go.mau.fi/whatsmeow/util/log"
 	"gorm.io/driver/sqlite"
@@ -31,7 +30,7 @@ func main() {
 	}
 
 	// whatsmeow instances
-	instances := make(map[string]*whatsmeow.Client)
+	instances := make(map[string]*configs.Instance)
 
 	// whatsmeow configs
 	dbLog := waLog.Stdout("Database", "DEBUG", true)
@@ -71,7 +70,7 @@ func main() {
 	stopCh := make(chan struct{})
 
 	// app configs
-	app := configs.NewApp(
+	app := configs.NewZapMeow(
 		whatsmeowContainer,
 		databaseClient,
 		redisClient,
@@ -87,7 +86,7 @@ func main() {
 
 	// services
 	messageService := services.NewMessageService(messageRepo)
-	accountService := services.NewAccountService(accountRepo)
+	accountService := services.NewAccountService(accountRepo, messageService)
 	wppService := services.NewWppService(
 		app,
 		messageService,

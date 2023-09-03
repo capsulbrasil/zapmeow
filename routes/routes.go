@@ -9,7 +9,7 @@ import (
 )
 
 func SetupRouter(
-	app *configs.App,
+	app *configs.ZapMeow,
 	wppService services.WppService,
 	messageService services.MessageService,
 	accountService services.AccountService,

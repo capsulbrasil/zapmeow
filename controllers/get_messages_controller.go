@@ -34,14 +34,14 @@ func (m *getMessagesController) Handler(c *gin.Context) {
 	}
 	instanceID := c.Param("instanceId")
 
-	instance, err := m.wppService.GetAuthenticatedInstance(instanceID)
+	_, err := m.wppService.GetAuthenticatedInstance(instanceID)
 	if err != nil {
 		utils.RespondInternalServerError(c, err.Error())
 		return
 	}
 
 	messages, err := m.messageService.GetChatMessages(
-		instance.Store.ID.User,
+		instanceID,
 		body.Phone,
 	)
 	if err != nil {

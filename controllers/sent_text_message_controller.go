@@ -56,7 +56,7 @@ func (t *sendTextMessageController) Handler(c *gin.Context) {
 		},
 	}
 
-	resp, err := instance.SendMessage(context.Background(), jid, msg)
+	resp, err := instance.Client.SendMessage(context.Background(), jid, msg)
 	if err != nil {
 		utils.RespondInternalServerError(c, err.Error())
 		return
@@ -64,8 +64,7 @@ func (t *sendTextMessageController) Handler(c *gin.Context) {
 
 	message := models.Message{
 		ChatJID:   jid.User,
-		SenderJID: instance.Store.ID.User,
-		MeJID:     instance.Store.ID.User,
+		SenderJID: instance.Client.Store.ID.User,
 		Body:      body.Text,
 		Timestamp: resp.Timestamp,
 		FromMe:    true,

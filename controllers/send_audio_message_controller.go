@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"context"
-	"mime"
 	"zapmeow/models"
 	"zapmeow/services"
 	"zapmeow/utils"
@@ -46,7 +45,7 @@ func (a *sendAudioMessageController) Handler(c *gin.Context) {
 		utils.RespondBadRequest(c, "Invalid phone")
 		return
 	}
-	instanceId := c.Param("instanceId")
+	instanceID := c.Param("instanceId")
 
 	mimitype, err := utils.GetMimeTypeFromDataURI(body.Base64)
 	if err != nil {
@@ -54,7 +53,7 @@ func (a *sendAudioMessageController) Handler(c *gin.Context) {
 		return
 	}
 
-	instance, err := a.wppService.GetAuthenticatedInstance(instanceId)
+	instance, err := a.wppService.GetAuthenticatedInstance(instanceID)
 	if err != nil {
 		utils.RespondInternalServerError(c, err.Error())
 		return
@@ -66,7 +65,7 @@ func (a *sendAudioMessageController) Handler(c *gin.Context) {
 		return
 	}
 
-	uploaded, err := instance.Upload(
+	uploaded, err := instance.Client.Upload(
 		context.Background(),
 		audioURL.Data,
 		whatsmeow.MediaAudio,
@@ -89,19 +88,17 @@ func (a *sendAudioMessageController) Handler(c *gin.Context) {
 		},
 	}
 
-	resp, err := instance.SendMessage(context.Background(), jid, msg)
+	resp, err := instance.Client.SendMessage(context.Background(), jid, msg)
 	if err != nil {
 		utils.RespondInternalServerError(c, err.Error())
 		return
 	}
 
-	dir, err := utils.MakeUserDirectory(instance.Store.ID.User)
-	exts, _ := mime.ExtensionsByType(mimitype)
 	path, err := utils.SaveMedia(
+		instanceID,
 		audioURL.Data,
-		dir,
 		resp.ID,
-		exts[0],
+		mimitype,
 	)
 	if err != nil {
 		utils.RespondInternalServerError(c, err.Error())
@@ -110,8 +107,7 @@ func (a *sendAudioMessageController) Handler(c *gin.Context) {
 
 	message := models.Message{
 		ChatJID:   jid.User,
-		SenderJID: instance.Store.ID.User,
-		MeJID:     instance.Store.ID.User,
+		SenderJID: instance.Client.Store.ID.User,
 		MediaType: "audio",
 		MediaPath: path,
 		Timestamp: resp.Timestamp,

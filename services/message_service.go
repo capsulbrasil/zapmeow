@@ -5,12 +5,13 @@ import (
 	"fmt"
 	"io/ioutil"
 	"mime"
+	"os"
 	"path/filepath"
+	"zapmeow/configs"
 	"zapmeow/models"
 	"zapmeow/repositories"
 	"zapmeow/utils"
 
-	"go.mau.fi/whatsmeow"
 	waProto "go.mau.fi/whatsmeow/binary/proto"
 	"go.mau.fi/whatsmeow/types/events"
 )
@@ -18,10 +19,10 @@ import (
 type MessageService interface {
 	CreateMessage(message *models.Message) error
 	CreateMessages(messages *[]models.Message) error
-	GetChatMessages(chatJID string, meJID string) (*[]models.Message, error)
-	CountChatMessages(chatJID string, meJID string) (int64, error)
-	DeleteMessagesByChatJID(chatJID string) error
-	Parse(instance *whatsmeow.Client, msg *events.Message) *models.Message
+	GetChatMessages(instanceID string, chatJID string) (*[]models.Message, error)
+	CountChatMessages(instanceID string, chatJID string) (int64, error)
+	DeleteMessagesByInstanceID(instanceID string) error
+	Parse(instance *configs.Instance, msg *events.Message) *models.Message
 	ToJSON(message models.Message) map[string]interface{}
 }
 
@@ -43,22 +44,22 @@ func (m *messageService) CreateMessages(messages *[]models.Message) error {
 	return m.messageRep.CreateMessages(messages)
 }
 
-func (m *messageService) GetChatMessages(chatJID string, meJID string) (*[]models.Message, error) {
-	return m.messageRep.GetChatMessages(chatJID, meJID)
+func (m *messageService) GetChatMessages(instanceID string, chatJID string) (*[]models.Message, error) {
+	return m.messageRep.GetChatMessages(instanceID, chatJID)
 }
 
-func (m *messageService) CountChatMessages(chatJID string, meJID string) (int64, error) {
-	return m.messageRep.CountChatMessages(chatJID, meJID)
+func (m *messageService) CountChatMessages(instanceID string, chatJID string) (int64, error) {
+	return m.messageRep.CountChatMessages(instanceID, chatJID)
 }
 
-func (m *messageService) DeleteMessagesByChatJID(chatJID string) error {
-	return m.messageRep.DeleteMessagesByChatJID(chatJID)
+func (m *messageService) DeleteMessagesByInstanceID(instanceID string) error {
+	return m.messageRep.DeleteMessagesByInstanceID(instanceID)
 }
 
-func (m *messageService) Parse(instance *whatsmeow.Client, msg *events.Message) *models.Message {
+func (m *messageService) Parse(instance *configs.Instance, msg *events.Message) *models.Message {
 	mediaType, path := m.downloadMessageMedia(
-		msg.Message,
 		instance,
+		msg.Message,
 		msg.Info.ID,
 	)
 
@@ -69,26 +70,26 @@ func (m *messageService) Parse(instance *whatsmeow.Client, msg *events.Message) 
 
 	if mediaType != "" {
 		return &models.Message{
-			MeJID:     instance.Store.ID.User,
-			MessageID: msg.Info.ID,
-			FromMe:    msg.Info.MessageSource.IsFromMe,
-			ChatJID:   msg.Info.Chat.User,
-			SenderJID: msg.Info.Sender.User,
-			Body:      body,
-			MediaPath: mediaType,
-			MediaType: path,
-			Timestamp: msg.Info.Timestamp,
+			InstanceID: instance.ID,
+			MessageID:  msg.Info.ID,
+			FromMe:     msg.Info.MessageSource.IsFromMe,
+			ChatJID:    msg.Info.Chat.User,
+			SenderJID:  msg.Info.Sender.User,
+			Body:       body,
+			MediaPath:  mediaType,
+			MediaType:  path,
+			Timestamp:  msg.Info.Timestamp,
 		}
 	}
 
 	return &models.Message{
-		MeJID:     instance.Store.ID.User,
-		MessageID: msg.Info.ID,
-		FromMe:    msg.Info.MessageSource.IsFromMe,
-		ChatJID:   msg.Info.Chat.User,
-		SenderJID: msg.Info.Sender.User,
-		Body:      body,
-		Timestamp: msg.Info.Timestamp,
+		InstanceID: instance.ID,
+		MessageID:  msg.Info.ID,
+		FromMe:     msg.Info.MessageSource.IsFromMe,
+		ChatJID:    msg.Info.Chat.User,
+		SenderJID:  msg.Info.Sender.User,
+		Body:       body,
+		Timestamp:  msg.Info.Timestamp,
 	}
 }
 
@@ -97,7 +98,6 @@ func (m *messageService) ToJSON(message models.Message) map[string]interface{} {
 		"ID":        message.ID,
 		"Sender":    message.SenderJID,
 		"Chat":      message.ChatJID,
-		"Me":        message.MeJID,
 		"MessageID": message.MessageID,
 		"FromMe":    message.FromMe,
 		"Timestamp": message.Timestamp,
@@ -122,11 +122,20 @@ func (m *messageService) ToJSON(message models.Message) map[string]interface{} {
 	return messageJson
 }
 
-func (m *messageService) downloadMessageMedia(message *waProto.Message, instance *whatsmeow.Client, fileName string) (string, string) {
+func (m *messageService) downloadMidia() {
+
+}
+
+func (m *messageService) downloadMessageMedia(
+	instance *configs.Instance,
+	message *waProto.Message,
+	fileName string,
+) (string, string) {
 	path := ""
 	mediaType := ""
 
-	dir, err := utils.MakeUserDirectory(instance.Store.ID.User)
+	dirPath := utils.MakeAccountStoragePath(instance.ID)
+	err := os.MkdirAll(dirPath, 0751)
 	if err != nil {
 		return "", ""
 	}
@@ -135,23 +144,19 @@ func (m *messageService) downloadMessageMedia(message *waProto.Message, instance
 	if document != nil {
 		mediaType = "document"
 
-		data, err := instance.Download(document)
+		data, err := instance.Client.Download(document)
 
 		if err != nil {
 			fmt.Println("Failed to download document", err)
 			return mediaType, ""
 		}
 
-		extension := ""
-		exts, err := mime.ExtensionsByType(document.GetMimetype())
-		if err != nil {
-			extension = exts[0]
-		} else {
-			filename := document.FileName
-			extension = filepath.Ext(*filename)
-		}
-
-		path, err = utils.SaveMedia(data, dir, fileName, extension)
+		path, err = utils.SaveMedia(
+			instance.ID,
+			data,
+			fileName,
+			document.GetMimetype(),
+		)
 		if err != nil {
 			fmt.Println("Failed to save document", err)
 			return mediaType, ""
@@ -163,19 +168,19 @@ func (m *messageService) downloadMessageMedia(message *waProto.Message, instance
 	if audio != nil {
 		mediaType = "audio"
 
-		data, err := instance.Download(audio)
+		data, err := instance.Client.Download(audio)
 		if err != nil {
 			fmt.Println("Failed to download audio", err)
 			return mediaType, ""
 		}
 
-		exts, err := mime.ExtensionsByType(audio.GetMimetype())
-		if err != nil {
-			fmt.Println("Failed to get mimetype", err)
-			return mediaType, ""
-		}
+		path, err = utils.SaveMedia(
+			instance.ID,
+			data,
+			fileName,
+			audio.GetMimetype(),
+		)
 
-		path, err = utils.SaveMedia(data, dir, fileName, exts[0])
 		if err != nil {
 			fmt.Println("Failed to save audio", err)
 			return mediaType, ""
@@ -186,19 +191,18 @@ func (m *messageService) downloadMessageMedia(message *waProto.Message, instance
 	image := message.GetImageMessage()
 	if image != nil {
 		mediaType = "image"
-		data, err := instance.Download(image)
+		data, err := instance.Client.Download(image)
 		if err != nil {
 			fmt.Println("Failed to download image", err)
 			return mediaType, ""
 		}
 
-		exts, err := mime.ExtensionsByType(image.GetMimetype())
-		if err != nil {
-			fmt.Println("Failed to get mimetype", err)
-			return mediaType, ""
-		}
-
-		path, err = utils.SaveMedia(data, dir, fileName, exts[0])
+		path, err = utils.SaveMedia(
+			instance.ID,
+			data,
+			fileName,
+			image.GetMimetype(),
+		)
 		if err != nil {
 			fmt.Println("Failed to save image", err)
 			return mediaType, ""
@@ -209,18 +213,18 @@ func (m *messageService) downloadMessageMedia(message *waProto.Message, instance
 	sticker := message.GetStickerMessage()
 	if sticker != nil {
 		mediaType = "image"
-		data, err := instance.Download(sticker)
+		data, err := instance.Client.Download(sticker)
 		if err != nil {
 			fmt.Println("Failed to download sticker", err)
 			return mediaType, ""
 		}
 
-		exts, err := mime.ExtensionsByType(sticker.GetMimetype())
-		if err != nil {
-			return mediaType, ""
-		}
-
-		path, err = utils.SaveMedia(data, dir, fileName, exts[0])
+		path, err = utils.SaveMedia(
+			instance.ID,
+			data,
+			fileName,
+			sticker.GetMimetype(),
+		)
 		if err != nil {
 			fmt.Println("Failed to download sticker", err)
 			return mediaType, ""

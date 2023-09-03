@@ -44,11 +44,11 @@ func (s *getStatusController) Handler(c *gin.Context) {
 	}
 
 	var status = account.Status
-	if !instance.IsConnected() {
+	if !instance.Client.IsConnected() {
 		status = "DISCONNECTED"
 	}
 
-	if status == "CONNECTED" && !instance.IsLoggedIn() {
+	if status == "CONNECTED" && !instance.Client.IsLoggedIn() {
 		status = "UNPAIRED"
 	}
 

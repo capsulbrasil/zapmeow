@@ -37,7 +37,7 @@ func (p *checkPhonesController) Handler(c *gin.Context) {
 		return
 	}
 
-	phones, err := instance.IsOnWhatsApp(body.Phones)
+	phones, err := instance.Client.IsOnWhatsApp(body.Phones)
 	if err != nil {
 		utils.RespondInternalServerError(c, err.Error())
 		return

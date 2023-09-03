@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"context"
-	"mime"
 	"zapmeow/models"
 	"zapmeow/services"
 	"zapmeow/utils"
@@ -46,7 +45,7 @@ func (i *sendImageMessageController) Handler(c *gin.Context) {
 		utils.RespondBadRequest(c, "Invalid phone")
 		return
 	}
-	instanceId := c.Param("instanceId")
+	instanceID := c.Param("instanceId")
 
 	mimitype, err := utils.GetMimeTypeFromDataURI(body.Base64)
 	if err != nil {
@@ -54,7 +53,7 @@ func (i *sendImageMessageController) Handler(c *gin.Context) {
 		return
 	}
 
-	instance, err := i.wppService.GetAuthenticatedInstance(instanceId)
+	instance, err := i.wppService.GetAuthenticatedInstance(instanceID)
 	if err != nil {
 		utils.RespondInternalServerError(c, err.Error())
 		return
@@ -66,7 +65,7 @@ func (i *sendImageMessageController) Handler(c *gin.Context) {
 		return
 	}
 
-	uploaded, err := instance.Upload(
+	uploaded, err := instance.Client.Upload(
 		context.Background(),
 		imageURL.Data,
 		whatsmeow.MediaImage,
@@ -88,20 +87,17 @@ func (i *sendImageMessageController) Handler(c *gin.Context) {
 		},
 	}
 
-	resp, err := instance.SendMessage(context.Background(), jid, msg)
+	resp, err := instance.Client.SendMessage(context.Background(), jid, msg)
 	if err != nil {
 		utils.RespondInternalServerError(c, err.Error())
 		return
 	}
 
-	dir, err := utils.MakeUserDirectory(instance.Store.ID.User)
-	exts, _ := mime.ExtensionsByType(mimitype)
-
 	path, err := utils.SaveMedia(
+		instanceID,
 		imageURL.Data,
-		dir,
 		resp.ID,
-		exts[0],
+		mimitype,
 	)
 	if err != nil {
 		utils.RespondInternalServerError(c, err.Error())
@@ -110,8 +106,7 @@ func (i *sendImageMessageController) Handler(c *gin.Context) {
 
 	message := models.Message{
 		ChatJID:   jid.User,
-		SenderJID: instance.Store.ID.User,
-		MeJID:     instance.Store.ID.User,
+		SenderJID: instance.Client.Store.ID.User,
 		MediaType: "image",
 		MediaPath: path,
 		Timestamp: resp.Timestamp,

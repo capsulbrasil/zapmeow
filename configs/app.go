@@ -9,26 +9,31 @@ import (
 	"gorm.io/gorm"
 )
 
-type App struct {
+type Instance struct {
+	ID     string
+	Client *whatsmeow.Client
+}
+
+type ZapMeow struct {
 	WhatsmeowContainer *sqlstore.Container
 	DatabaseClient     *gorm.DB
 	RedisClient        *redis.Client
-	Instances          map[string]*whatsmeow.Client
+	Instances          map[string]*Instance
 	Config             ZapMeowConfig
 	Wg                 *sync.WaitGroup
 	StopCh             <-chan struct{}
 }
 
-func NewApp(
+func NewZapMeow(
 	whatsmeowContainer *sqlstore.Container,
 	databaseClient *gorm.DB,
 	redisClient *redis.Client,
-	instances map[string]*whatsmeow.Client,
+	instances map[string]*Instance,
 	config ZapMeowConfig,
 	wg *sync.WaitGroup,
 	stopCh <-chan struct{},
-) *App {
-	return &App{
+) *ZapMeow {
+	return &ZapMeow{
 		WhatsmeowContainer: whatsmeowContainer,
 		DatabaseClient:     databaseClient,
 		RedisClient:        redisClient,
