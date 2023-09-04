@@ -13,6 +13,10 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
+type audioMessageBody struct {
+	Phone  string
+	Base64 string
+}
 type sendAudioMessageController struct {
 	wppService     services.WppService
 	messageService services.MessageService
@@ -28,13 +32,18 @@ func NewSendAudioMessageController(
 	}
 }
 
+// Send Audio Message on WhatsApp
+// @Summary Send Audio Message on WhatsApp
+// @Description Sends an audio message on WhatsApp using the specified instance.
+// @Tags WhatsApp Chat
+// @Param instanceId path string true "Instance ID"
+// @Param data body audioMessageBody true "Audio message body"
+// @Accept json
+// @Produce json
+// @Success 200 {object} map[string]interface{} "Message Send Response"
+// @Router /{instanceId}/chat/send/audio [post]
 func (a *sendAudioMessageController) Handler(c *gin.Context) {
-	type Body struct {
-		Phone  string
-		Base64 string
-	}
-
-	var body Body
+	var body audioMessageBody
 	if err := c.ShouldBindJSON(&body); err != nil {
 		utils.RespondBadRequest(c, "Body data is invalid")
 		return

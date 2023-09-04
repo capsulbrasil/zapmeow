@@ -1,0 +1,208 @@
+basePath: /api
+definitions:
+  controllers.audioMessageBody:
+    properties:
+      base64:
+        type: string
+      phone:
+        type: string
+    type: object
+  controllers.imageMessageBody:
+    properties:
+      base64:
+        type: string
+      phone:
+        type: string
+    type: object
+  controllers.phoneCheckBody:
+    properties:
+      phones:
+        items:
+          type: string
+        type: array
+    type: object
+  controllers.textMessageBody:
+    properties:
+      phone:
+        type: string
+      text:
+        type: string
+    type: object
+host: localhost:8900
+info:
+  contact: {}
+  description: API to handle multiple WhatsApp instances
+  title: ZapMeow API
+  version: "1.0"
+paths:
+  /{instanceId}/chat/messages:
+    post:
+      consumes:
+      - application/json
+      description: Returns chat messages from the specified WhatsApp instance.
+      parameters:
+      - description: Instance ID
+        in: path
+        name: instanceId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of chat messages
+          schema:
+            items:
+              type: string
+            type: array
+      summary: Get WhatsApp Chat Messages
+      tags:
+      - WhatsApp Chat
+  /{instanceId}/chat/send/audio:
+    post:
+      consumes:
+      - application/json
+      description: Sends an audio message on WhatsApp using the specified instance.
+      parameters:
+      - description: Instance ID
+        in: path
+        name: instanceId
+        required: true
+        type: string
+      - description: Audio message body
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.audioMessageBody'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Message Send Response
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Send Audio Message on WhatsApp
+      tags:
+      - WhatsApp Chat
+  /{instanceId}/chat/send/image:
+    post:
+      consumes:
+      - application/json
+      description: Sends an image message on WhatsApp using the specified instance.
+      parameters:
+      - description: Instance ID
+        in: path
+        name: instanceId
+        required: true
+        type: string
+      - description: Image message body
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.imageMessageBody'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Message Send Response
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Send Image Message on WhatsApp
+      tags:
+      - WhatsApp Chat
+  /{instanceId}/chat/send/text:
+    post:
+      consumes:
+      - application/json
+      description: Sends a text message on WhatsApp using the specified instance.
+      parameters:
+      - description: Instance ID
+        in: path
+        name: instanceId
+        required: true
+        type: string
+      - description: Text message body
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.textMessageBody'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Message Send Response
+          schema:
+            type: string
+      summary: Send Text Message on WhatsApp
+      tags:
+      - WhatsApp Chat
+  /{instanceId}/check/phones:
+    post:
+      consumes:
+      - application/json
+      description: Verifies if the phone numbers in the provided list are registered
+        WhatsApp users.
+      parameters:
+      - description: Instance ID
+        in: path
+        name: instanceId
+        required: true
+        type: string
+      - description: Phone list
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.phoneCheckBody'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of verified numbers
+          schema:
+            items:
+              type: string
+            type: array
+      summary: Check Phones on WhatsApp
+      tags:
+      - WhatsApp Phone Verification
+  /{instanceId}/qrcode:
+    get:
+      description: Returns a QR code to initiate WhatsApp login.
+      produces:
+      - image/png
+      responses:
+        "200":
+          description: PNG image containing the QR code
+          schema:
+            type: file
+      summary: Get WhatsApp QR Code
+      tags:
+      - WhatsApp Login
+  /{instanceId}/status:
+    get:
+      consumes:
+      - application/json
+      description: Returns the status of the specified WhatsApp instance.
+      parameters:
+      - description: Instance ID
+        in: path
+        name: instanceId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Status Response
+          schema:
+            type: string
+      summary: Get WhatsApp Instance Status
+      tags:
+      - WhatsApp Status
+swagger: "2.0"

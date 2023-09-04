@@ -5,7 +5,11 @@ import (
 	"zapmeow/controllers"
 	"zapmeow/services"
 
+	docs "zapmeow/docs"
+
 	"github.com/gin-gonic/gin"
+	swaggerfiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 func SetupRouter(
@@ -14,6 +18,8 @@ func SetupRouter(
 	messageService services.MessageService,
 	accountService services.AccountService,
 ) *gin.Engine {
+	docs.SwaggerInfo.BasePath = "/api"
+
 	router := gin.Default()
 
 	getQrCodeController := controllers.NewGetQrCodeController(
@@ -54,6 +60,7 @@ func SetupRouter(
 	group.POST("/:instanceId/chat/send/text", sendTextMessageController.Handler)
 	group.POST("/:instanceId/chat/send/image", sendImageMessageController.Handler)
 	group.POST("/:instanceId/chat/send/audio", sendAudioMessageController.Handler)
+	group.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
 
 	return router
 }

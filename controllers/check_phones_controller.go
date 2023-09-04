@@ -7,6 +7,10 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+type phoneCheckBody struct {
+	Phones []string
+}
+
 type checkPhonesController struct {
 	wppService services.WppService
 }
@@ -19,12 +23,18 @@ func NewCheckPhonesController(
 	}
 }
 
+// Check Phones on WhatsApp
+// @Summary Check Phones on WhatsApp
+// @Description Verifies if the phone numbers in the provided list are registered WhatsApp users.
+// @Tags WhatsApp Phone Verification
+// @Param instanceId path string true "Instance ID"
+// @Param data body phoneCheckBody true "Phone list"
+// @Accept json
+// @Produce json
+// @Success 200 {array} string "List of verified numbers"
+// @Router /{instanceId}/check/phones [post]
 func (p *checkPhonesController) Handler(c *gin.Context) {
-	type Body struct {
-		Phones []string
-	}
-
-	var body Body
+	var body phoneCheckBody
 	if err := c.ShouldBindJSON(&body); err != nil {
 		utils.RespondBadRequest(c, "Body data is invalid")
 		return

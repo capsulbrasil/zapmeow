@@ -23,6 +23,15 @@ func NewGetStatusController(
 	}
 }
 
+// Get WhatsApp Instance Status
+// @Summary Get WhatsApp Instance Status
+// @Description Returns the status of the specified WhatsApp instance.
+// @Tags WhatsApp Status
+// @Param instanceId path string true "Instance ID"
+// @Accept json
+// @Produce json
+// @Success 200 {string} string "Status Response"
+// @Router /{instanceId}/status [get]
 func (s *getStatusController) Handler(c *gin.Context) {
 	instanceID := c.Param("instanceId")
 

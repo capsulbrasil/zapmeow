@@ -25,6 +25,13 @@ func NewGetQrCodeController(
 	}
 }
 
+// Get QR Code for WhatsApp Login
+// @Summary Get WhatsApp QR Code
+// @Description Returns a QR code to initiate WhatsApp login.
+// @Tags WhatsApp Login
+// @Produce image/png
+// @Success 200 {file} file "PNG image containing the QR code"
+// @Router /{instanceId}/qrcode [get]
 func (q *getQrCodeController) Handler(c *gin.Context) {
 	instanceID := c.Param("instanceId")
 

@@ -22,6 +22,15 @@ func NewGetMessagesController(
 	}
 }
 
+// Get WhatsApp Chat Messages
+// @Summary Get WhatsApp Chat Messages
+// @Description Returns chat messages from the specified WhatsApp instance.
+// @Tags WhatsApp Chat
+// @Param instanceId path string true "Instance ID"
+// @Accept json
+// @Produce json
+// @Success 200 {array} string "List of chat messages"
+// @Router /{instanceId}/chat/messages [post]
 func (m *getMessagesController) Handler(c *gin.Context) {
 	type Body struct {
 		Phone string

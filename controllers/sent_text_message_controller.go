@@ -10,6 +10,11 @@ import (
 	waProto "go.mau.fi/whatsmeow/binary/proto"
 )
 
+type textMessageBody struct {
+	Phone string
+	Text  string
+}
+
 type sendTextMessageController struct {
 	wppService     services.WppService
 	messageService services.MessageService
@@ -25,13 +30,18 @@ func NewSendTextMessageController(
 	}
 }
 
+// Send Text Message on WhatsApp
+// @Summary Send Text Message on WhatsApp
+// @Description Sends a text message on WhatsApp using the specified instance.
+// @Tags WhatsApp Chat
+// @Param instanceId path string true "Instance ID"
+// @Param data body textMessageBody true "Text message body"
+// @Accept json
+// @Produce json
+// @Success 200 {object} string "Message Send Response"
+// @Router /{instanceId}/chat/send/text [post]
 func (t *sendTextMessageController) Handler(c *gin.Context) {
-	type Body struct {
-		Phone string
-		Text  string
-	}
-
-	var body Body
+	var body textMessageBody
 	if err := c.ShouldBindJSON(&body); err != nil {
 		utils.RespondBadRequest(c, "Body data is invalid")
 		return
