@@ -102,7 +102,7 @@ func main() {
 	historySyncWorker := workers.NewHistorySyncWorker(
 		app,
 		messageService,
-		accountRepo,
+		accountService,
 	)
 
 	r := routes.SetupRouter(

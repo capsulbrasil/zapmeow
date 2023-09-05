@@ -270,6 +270,12 @@ func (w *wppService) handleLoggedOut(instanceID string) {
 		return
 	}
 
+	err = w.accountService.DeleteAccountInfos(instanceID)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
 	instance.Client.Disconnect()
 	delete(w.app.Instances, instanceID)
 }

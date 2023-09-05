@@ -47,7 +47,7 @@ func (repo *messageRepository) GetChatMessages(instanceID string, chatJID string
 }
 
 func (repo *messageRepository) DeleteMessagesByInstanceID(instanceID string) error {
-	if result := repo.db.Where("instance_id = ?", instanceID).Delete(&models.Message{}); result.Error != nil {
+	if result := repo.db.Where("instance_id = ?", instanceID).Unscoped().Delete(&models.Message{}); result.Error != nil {
 		return result.Error
 	}
 	return nil

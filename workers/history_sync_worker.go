@@ -70,6 +70,12 @@ func (q *historySyncWorker) ProcessQueue() {
 			}
 
 			if !account.WasSynced {
+				err := q.accountService.DeleteAccountInfos(account.InstanceID)
+				if err != nil {
+					fmt.Println(err)
+					continue
+				}
+
 				err = q.accountService.UpdateAccount(account.InstanceID, map[string]interface{}{
 					"WasSynced": true,
 				})
