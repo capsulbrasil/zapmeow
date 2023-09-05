@@ -21,7 +21,7 @@ func NewGetContactInfoController(
 
 func (s *getContactInfoController) Handler(c *gin.Context) {
 	instanceID := c.Param("instanceId")
-	phone := c.Param("phone")
+	phone := c.Query("phone")
 
 	jid, ok := utils.MakeJID(phone)
 	if !ok {

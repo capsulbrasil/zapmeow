@@ -110,6 +110,9 @@ func (w *wppService) GetContactInfo(instanceID string, jid types.JID) (map[strin
 		jid,
 		&whatsmeow.GetProfilePictureParams{},
 	)
+	if err != nil {
+		return nil, err
+	}
 
 	return map[string]interface{}{
 		"Name":    userInfo[jid].VerifiedName,
