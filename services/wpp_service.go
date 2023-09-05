@@ -106,6 +106,11 @@ func (w *wppService) GetContactInfo(instanceID string, jid types.JID) (map[strin
 		return nil, err
 	}
 
+	contactInfo, err := instance.Client.Store.Contacts.GetContact(jid)
+	if err != nil {
+		return nil, err
+	}
+
 	profilePictureInfo, err := instance.Client.GetProfilePictureInfo(
 		jid,
 		&whatsmeow.GetProfilePictureParams{},
@@ -116,7 +121,7 @@ func (w *wppService) GetContactInfo(instanceID string, jid types.JID) (map[strin
 
 	return map[string]interface{}{
 		"Phone":   jid.User,
-		"Name":    userInfo[jid].VerifiedName,
+		"Name":    contactInfo.PushName,
 		"Status":  userInfo[jid].Status,
 		"Picture": profilePictureInfo.URL,
 	}, nil
