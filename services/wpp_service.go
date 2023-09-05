@@ -115,6 +115,7 @@ func (w *wppService) GetContactInfo(instanceID string, jid types.JID) (map[strin
 	}
 
 	return map[string]interface{}{
+		"Phone":   jid.User,
 		"Name":    userInfo[jid].VerifiedName,
 		"Status":  userInfo[jid].Status,
 		"Picture": profilePictureInfo.URL,
