@@ -31,6 +31,12 @@ func SetupRouter(
 		wppService,
 		accountService,
 	)
+	getProfileInfoController := controllers.NewGetProfileInfoController(
+		wppService,
+	)
+	getContactInfoController := controllers.NewGetContactInfoController(
+		wppService,
+	)
 	checkPhonesController := controllers.NewCheckPhonesController(
 		wppService,
 	)
@@ -55,6 +61,8 @@ func SetupRouter(
 
 	group.GET("/:instanceId/qrcode", getQrCodeController.Handler)
 	group.GET("/:instanceId/status", getStatusController.Handler)
+	group.GET("/:instanceId/profile", getProfileInfoController.Handler)
+	group.POST("/:instanceId/contact/info", getContactInfoController.Handler)
 	group.POST("/:instanceId/check/phones", checkPhonesController.Handler)
 	group.POST("/:instanceId/chat/messages", getMessagesController.Handler)
 	group.POST("/:instanceId/chat/send/text", sendTextMessageController.Handler)

@@ -27,6 +27,7 @@ type wppService struct {
 type WppService interface {
 	GetInstance(instanceID string) (*configs.Instance, error)
 	GetAuthenticatedInstance(instanceID string) (*configs.Instance, error)
+	GetContactInfo(instanceID string, jid types.JID) (map[string]interface{}, error)
 }
 
 func NewWppService(
@@ -92,6 +93,29 @@ func (w *wppService) GetAuthenticatedInstance(instanceID string) (*configs.Insta
 	}
 
 	return instance, nil
+}
+
+func (w *wppService) GetContactInfo(instanceID string, jid types.JID) (map[string]interface{}, error) {
+	instance, err := w.GetAuthenticatedInstance(instanceID)
+	if err != nil {
+		return nil, err
+	}
+
+	userInfo, err := instance.Client.GetUserInfo([]types.JID{jid})
+	if err != nil {
+		return nil, err
+	}
+
+	profilePictureInfo, err := instance.Client.GetProfilePictureInfo(
+		jid,
+		&whatsmeow.GetProfilePictureParams{},
+	)
+
+	return map[string]interface{}{
+		"Name":    userInfo[jid].VerifiedName,
+		"Status":  userInfo[jid].Status,
+		"Picture": profilePictureInfo.URL,
+	}, nil
 }
 
 func (w *wppService) getClient(instanceID string) (*whatsmeow.Client, error) {

@@ -9,7 +9,6 @@ import (
 
 type getStatusController struct {
 	wppService     services.WppService
-	messageService services.MessageService
 	accountService services.AccountService
 }
 
