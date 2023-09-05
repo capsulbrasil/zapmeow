@@ -11,7 +11,7 @@ type Message struct {
 	SenderJID  string `gorm:"column:sender_jid"`
 	ChatJID    string `gorm:"column:chat_jid"`
 	InstanceID string
-	MessageID  string
+	MessageID  string `form:"unique"`
 	Timestamp  time.Time
 	Body       string
 	MediaType  string

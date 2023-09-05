@@ -73,12 +73,13 @@ func (t *sendTextMessageController) Handler(c *gin.Context) {
 	}
 
 	message := models.Message{
-		ChatJID:   jid.User,
-		SenderJID: instance.Client.Store.ID.User,
-		Body:      body.Text,
-		Timestamp: resp.Timestamp,
-		FromMe:    true,
-		MessageID: resp.ID,
+		ChatJID:    jid.User,
+		SenderJID:  instance.Client.Store.ID.User,
+		InstanceID: instance.ID,
+		Body:       body.Text,
+		Timestamp:  resp.Timestamp,
+		FromMe:     true,
+		MessageID:  resp.ID,
 	}
 
 	err = t.messageService.CreateMessage(&message)

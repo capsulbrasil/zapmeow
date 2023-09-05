@@ -115,13 +115,14 @@ func (a *sendAudioMessageController) Handler(c *gin.Context) {
 	}
 
 	message := models.Message{
-		ChatJID:   jid.User,
-		SenderJID: instance.Client.Store.ID.User,
-		MediaType: "audio",
-		MediaPath: path,
-		Timestamp: resp.Timestamp,
-		FromMe:    true,
-		MessageID: resp.ID,
+		ChatJID:    jid.User,
+		SenderJID:  instance.Client.Store.ID.User,
+		InstanceID: instance.ID,
+		MediaType:  "audio",
+		MediaPath:  path,
+		Timestamp:  resp.Timestamp,
+		FromMe:     true,
+		MessageID:  resp.ID,
 	}
 
 	err = a.messageService.CreateMessage(&message)

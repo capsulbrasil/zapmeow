@@ -115,13 +115,14 @@ func (i *sendImageMessageController) Handler(c *gin.Context) {
 	}
 
 	message := models.Message{
-		ChatJID:   jid.User,
-		SenderJID: instance.Client.Store.ID.User,
-		MediaType: "image",
-		MediaPath: path,
-		Timestamp: resp.Timestamp,
-		FromMe:    true,
-		MessageID: resp.ID,
+		ChatJID:    jid.User,
+		SenderJID:  instance.Client.Store.ID.User,
+		InstanceID: instance.ID,
+		MediaType:  "image",
+		MediaPath:  path,
+		Timestamp:  resp.Timestamp,
+		FromMe:     true,
+		MessageID:  resp.ID,
 	}
 
 	err = i.messageService.CreateMessage(&message)
