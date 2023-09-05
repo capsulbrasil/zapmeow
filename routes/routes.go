@@ -27,6 +27,10 @@ func SetupRouter(
 		messageService,
 		accountService,
 	)
+	logoutController := controllers.NewLogoutController(
+		wppService,
+		accountService,
+	)
 	getStatusController := controllers.NewGetStatusController(
 		wppService,
 		accountService,
@@ -60,6 +64,7 @@ func SetupRouter(
 	group := router.Group("/api")
 
 	group.GET("/:instanceId/qrcode", getQrCodeController.Handler)
+	group.POST("/:instanceId/logout", logoutController.Handler)
 	group.GET("/:instanceId/status", getStatusController.Handler)
 	group.GET("/:instanceId/profile", getProfileInfoController.Handler)
 	group.POST("/:instanceId/contact/info", getContactInfoController.Handler)
