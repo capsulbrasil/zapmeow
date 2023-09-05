@@ -47,7 +47,7 @@ func (q *historySyncWorker) ProcessQueue() {
 			return
 		default:
 			data, err := queue.Dequeue()
-			if err == nil {
+			if err == nil && data == nil {
 				time.Sleep(time.Second)
 				continue
 			} else if err != nil {
