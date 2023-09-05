@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"zapmeow/configs"
 	"zapmeow/services"
 	"zapmeow/utils"
 
@@ -8,15 +9,18 @@ import (
 )
 
 type logoutController struct {
+	app            *configs.ZapMeow
 	wppService     services.WppService
 	accountService services.AccountService
 }
 
 func NewLogoutController(
+	app *configs.ZapMeow,
 	wppService services.WppService,
 	accountService services.AccountService,
 ) *logoutController {
 	return &logoutController{
+		app:            app,
 		wppService:     wppService,
 		accountService: accountService,
 	}
@@ -44,6 +48,15 @@ func (s *logoutController) Handler(c *gin.Context) {
 		utils.RespondInternalServerError(c, err.Error())
 		return
 	}
+
+	err = s.accountService.DeleteAccountInfos(instanceID)
+	if err != nil {
+		utils.RespondInternalServerError(c, err.Error())
+		return
+	}
+
+	instance.Client.Disconnect()
+	delete(s.app.Instances, instanceID)
 
 	utils.RespondWithSuccess(c, gin.H{})
 }

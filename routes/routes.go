@@ -28,6 +28,7 @@ func SetupRouter(
 		accountService,
 	)
 	logoutController := controllers.NewLogoutController(
+		app,
 		wppService,
 		accountService,
 	)
