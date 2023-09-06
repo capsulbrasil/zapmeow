@@ -19,6 +19,16 @@ func NewGetContactInfoController(
 	}
 }
 
+// Get Contact Information
+// @Summary Get Contact Information
+// @Description Retrieves contact information.
+// @Tags WhatsApp Contact
+// @Param instanceId path string true "Instance ID"
+// @Param phone query string true "Phone"
+// @Accept json
+// @Produce json
+// @Success 200 {object} map[string]interface{} "Contact Information"
+// @Router /{instanceId}/contact/info [get]
 func (s *getContactInfoController) Handler(c *gin.Context) {
 	instanceID := c.Param("instanceId")
 	phone := c.Query("phone")

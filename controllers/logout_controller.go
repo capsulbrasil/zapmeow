@@ -26,6 +26,15 @@ func NewLogoutController(
 	}
 }
 
+// Logout from WhatsApp
+// @Summary Logout from WhatsApp
+// @Description Logs out from the specified WhatsApp instance.
+// @Tags WhatsApp Logout
+// @Param instanceId path string true "Instance ID"
+// @Accept json
+// @Produce json
+// @Success 200 {object} map[string]interface{} "Logout successful"
+// @Router /{instanceId}/logout [post]
 func (s *logoutController) Handler(c *gin.Context) {
 	instanceID := c.Param("instanceId")
 

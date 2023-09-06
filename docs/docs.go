@@ -219,6 +219,112 @@ const docTemplate = `{
                 }
             }
         },
+        "/{instanceId}/contact/info": {
+            "get": {
+                "description": "Retrieves contact information.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "WhatsApp Contact"
+                ],
+                "summary": "Get Contact Information",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Instance ID",
+                        "name": "instanceId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Phone",
+                        "name": "phone",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Contact Information",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/{instanceId}/logout": {
+            "post": {
+                "description": "Logs out from the specified WhatsApp instance.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "WhatsApp Logout"
+                ],
+                "summary": "Logout from WhatsApp",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Instance ID",
+                        "name": "instanceId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Logout successful",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/{instanceId}/profile": {
+            "get": {
+                "description": "Retrieves profile information.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "WhatsApp Profile"
+                ],
+                "summary": "Get Profile Information",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Instance ID",
+                        "name": "instanceId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Profile Information",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
         "/{instanceId}/qrcode": {
             "get": {
                 "description": "Returns a QR code to initiate WhatsApp login.",

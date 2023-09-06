@@ -19,6 +19,15 @@ func NewGetProfileInfoController(
 	}
 }
 
+// Get Profile Information
+// @Summary Get Profile Information
+// @Description Retrieves profile information.
+// @Tags WhatsApp Profile
+// @Param instanceId path string true "Instance ID"
+// @Accept json
+// @Produce json
+// @Success 200 {object} map[string]interface{} "Profile Information"
+// @Router /{instanceId}/profile [get]
 func (s *getProfileInfoController) Handler(c *gin.Context) {
 	instanceID := c.Param("instanceId")
 

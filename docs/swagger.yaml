@@ -171,6 +171,77 @@ paths:
       summary: Check Phones on WhatsApp
       tags:
       - WhatsApp Phone Verification
+  /{instanceId}/contact/info:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves contact information.
+      parameters:
+      - description: Instance ID
+        in: path
+        name: instanceId
+        required: true
+        type: string
+      - description: Phone
+        in: query
+        name: phone
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Contact Information
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Get Contact Information
+      tags:
+      - WhatsApp Contact
+  /{instanceId}/logout:
+    post:
+      consumes:
+      - application/json
+      description: Logs out from the specified WhatsApp instance.
+      parameters:
+      - description: Instance ID
+        in: path
+        name: instanceId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Logout successful
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Logout from WhatsApp
+      tags:
+      - WhatsApp Logout
+  /{instanceId}/profile:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves profile information.
+      parameters:
+      - description: Instance ID
+        in: path
+        name: instanceId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Profile Information
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Get Profile Information
+      tags:
+      - WhatsApp Profile
   /{instanceId}/qrcode:
     get:
       description: Returns a QR code to initiate WhatsApp login.
