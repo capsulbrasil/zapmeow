@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 	"time"
 	"zapmeow/configs"
 	"zapmeow/models"
@@ -27,7 +29,10 @@ type wppService struct {
 type WppService interface {
 	GetInstance(instanceID string) (*configs.Instance, error)
 	GetAuthenticatedInstance(instanceID string) (*configs.Instance, error)
+	DestroyInstance(instanceID string) error
+	Logout(instanceID string) error
 	GetContactInfo(instanceID string, jid types.JID) (map[string]interface{}, error)
+	DeleteInstanceMessages(instanceID string) error
 }
 
 func NewWppService(
@@ -93,6 +98,52 @@ func (w *wppService) GetAuthenticatedInstance(instanceID string) (*configs.Insta
 	}
 
 	return instance, nil
+}
+
+func (w *wppService) DestroyInstance(instanceID string) error {
+	instance, err := w.GetInstance(instanceID)
+	if err != nil {
+		return err
+	}
+
+	err = w.DeleteInstanceMessages(instanceID)
+	if err != nil {
+		return err
+	}
+
+	instance.Client.Disconnect()
+	delete(w.app.Instances, instanceID)
+
+	return nil
+}
+
+func (w *wppService) Logout(instanceID string) error {
+	instance, err := w.GetAuthenticatedInstance(instanceID)
+	if err != nil {
+		return err
+	}
+
+	err = instance.Client.Logout()
+	if err != nil {
+		return err
+	}
+
+	err = w.accountService.UpdateAccount(instanceID, map[string]interface{}{
+		"Status": "UNPAIRED",
+	})
+	if err != nil {
+		return err
+	}
+
+	return w.DestroyInstance(instanceID)
+}
+
+func (a *wppService) DeleteInstanceMessages(instanceID string) error {
+	err := a.messageService.DeleteMessagesByInstanceID(instanceID)
+	if err != nil {
+		return err
+	}
+	return a.deleteInstanceDirectory(instanceID)
 }
 
 func (w *wppService) GetContactInfo(instanceID string, jid types.JID) (map[string]interface{}, error) {
@@ -214,6 +265,23 @@ func (w *wppService) qrcode(instanceID string) {
 	}
 }
 
+func (a *wppService) deleteInstanceDirectory(instanceID string) error {
+	dirPath := utils.MakeAccountStoragePath(instanceID)
+	err := filepath.Walk(dirPath, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if !info.IsDir() {
+			err = os.Remove(path)
+			if err != nil {
+				return err
+			}
+			fmt.Printf("File removed: %s\n", path)
+		}
+		return nil
+	})
+	return err
+}
 func (w *wppService) eventHandler(instanceID string, rawEvt interface{}) {
 	switch evt := rawEvt.(type) {
 	case *events.Message:
@@ -262,31 +330,17 @@ func (w *wppService) handleConnected(instanceID string) {
 }
 
 func (w *wppService) handleLoggedOut(instanceID string) {
-	instance := w.app.Instances[instanceID]
-
-	_, err := w.accountService.GetAccountByInstanceID(instanceID)
+	err := w.DestroyInstance(instanceID)
 	if err != nil {
-		fmt.Println(err)
-		return
+		fmt.Println("Error", err)
 	}
 
 	err = w.accountService.UpdateAccount(instanceID, map[string]interface{}{
 		"Status": "UNPAIRED",
 	})
-
 	if err != nil {
 		fmt.Println("Error", err)
-		return
 	}
-
-	err = w.accountService.DeleteAccountInfos(instanceID)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
-	instance.Client.Disconnect()
-	delete(w.app.Instances, instanceID)
 }
 
 func (w *wppService) handleMessage(instanceId string, evt *events.Message) {

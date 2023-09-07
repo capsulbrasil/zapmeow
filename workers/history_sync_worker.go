@@ -19,6 +19,7 @@ type historySyncWorker struct {
 	app            *configs.ZapMeow
 	messageService services.MessageService
 	accountService services.AccountService
+	wppService     services.WppService
 }
 
 type HistorySyncWorker interface {
@@ -29,10 +30,12 @@ func NewHistorySyncWorker(
 	app *configs.ZapMeow,
 	messageService services.MessageService,
 	accountService services.AccountService,
+	wppService services.WppService,
 ) *historySyncWorker {
 	return &historySyncWorker{
 		messageService: messageService,
 		accountService: accountService,
+		wppService:     wppService,
 		app:            app,
 	}
 }
@@ -70,7 +73,7 @@ func (q *historySyncWorker) ProcessQueue() {
 			}
 
 			if !account.WasSynced {
-				err := q.accountService.DeleteAccountInfos(account.InstanceID)
+				err := q.wppService.DeleteInstanceMessages(account.InstanceID)
 				if err != nil {
 					fmt.Println(err)
 					continue

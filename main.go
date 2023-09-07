@@ -103,6 +103,7 @@ func main() {
 		app,
 		messageService,
 		accountService,
+		wppService,
 	)
 
 	r := routes.SetupRouter(

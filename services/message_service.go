@@ -122,10 +122,6 @@ func (m *messageService) ToJSON(message models.Message) map[string]interface{} {
 	return messageJson
 }
 
-func (m *messageService) downloadMidia() {
-
-}
-
 func (m *messageService) downloadMessageMedia(
 	instance *configs.Instance,
 	message *waProto.Message,
