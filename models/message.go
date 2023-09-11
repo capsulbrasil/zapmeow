@@ -14,7 +14,7 @@ type Message struct {
 	MessageID  string `gorm:"uniqueIndex"`
 	Timestamp  time.Time
 	Body       string
-	MediaType  string
+	MediaType  string // text, image, ptt, audio, document
 	MediaPath  string
 	FromMe     bool
 }

@@ -229,6 +229,11 @@ func (m *messageService) downloadMessageMedia(
 		fmt.Println("Sticker saved")
 	}
 
+	video := message.GetVideoMessage()
+	if video != nil {
+		mediaType = "video"
+	}
+
 	if path != "" && mediaType != "" {
 		return mediaType, path
 	}
