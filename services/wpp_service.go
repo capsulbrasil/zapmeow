@@ -166,15 +166,17 @@ func (w *wppService) GetContactInfo(instanceID string, jid types.JID) (map[strin
 		jid,
 		&whatsmeow.GetProfilePictureParams{},
 	)
-	if err != nil {
-		return nil, err
+
+	profilePictureURL := ""
+	if profilePictureInfo != nil {
+		profilePictureURL = profilePictureInfo.URL
 	}
 
 	return map[string]interface{}{
 		"Phone":   jid.User,
 		"Name":    contactInfo.PushName,
 		"Status":  userInfo[jid].Status,
-		"Picture": profilePictureInfo.URL,
+		"Picture": profilePictureURL,
 	}, nil
 }
 
