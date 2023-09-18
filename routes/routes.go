@@ -20,7 +20,12 @@ func SetupRouter(
 ) *gin.Engine {
 	docs.SwaggerInfo.BasePath = "/api"
 
-	router := gin.Default()
+	var router *gin.Engine
+	if app.Config.Env == "production" {
+		router = gin.New()
+	} else {
+		router = gin.Default()
+	}
 
 	getQrCodeController := controllers.NewGetQrCodeController(
 		wppService,

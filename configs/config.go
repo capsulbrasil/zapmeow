@@ -3,6 +3,7 @@ package configs
 import "os"
 
 type ZapMeowConfig struct {
+	Env           string
 	StoragePath   string
 	WebhookURL    string
 	DatabaseURL   string
@@ -14,6 +15,7 @@ type ZapMeowConfig struct {
 }
 
 func LoadConfigs() (ZapMeowConfig, error) {
+	env := os.Getenv("ENV")
 	storagePath := os.Getenv("STORAGE_PATH")
 	webhookURL := os.Getenv("WEBHOOK_URL")
 	databaseURL := os.Getenv("DATABASE_PATH")
@@ -22,6 +24,7 @@ func LoadConfigs() (ZapMeowConfig, error) {
 	port := os.Getenv("PORT")
 
 	return ZapMeowConfig{
+		Env:           env,
 		StoragePath:   storagePath,
 		WebhookURL:    webhookURL,
 		DatabaseURL:   databaseURL,

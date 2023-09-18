@@ -82,7 +82,7 @@ func main() {
 		instances,
 		config,
 		&wg,
-		stopCh,
+		&stopCh,
 	)
 
 	// repositories
@@ -135,8 +135,8 @@ func main() {
 
 	go historySyncWorker.ProcessQueue()
 
-	<-stopCh
+	<-*app.StopCh
 
-	wg.Wait()
-	close(stopCh)
+	app.Wg.Wait()
+	close(*app.StopCh)
 }

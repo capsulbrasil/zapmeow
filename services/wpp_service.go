@@ -195,10 +195,12 @@ func (w *wppService) getClient(instanceID string) (*whatsmeow.Client, error) {
 			return nil, err
 		}
 		return createClient(
+			w.app.Config,
 			w.app.WhatsmeowContainer.NewDevice(),
 		), nil
 	} else if account.Status != "CONNECTED" {
 		return createClient(
+			w.app.Config,
 			w.app.WhatsmeowContainer.NewDevice(),
 		), nil
 	}
@@ -215,11 +217,17 @@ func (w *wppService) getClient(instanceID string) (*whatsmeow.Client, error) {
 	}
 
 	if device != nil {
-		return createClient(device), nil
+		return createClient(
+			w.app.Config,
+			device,
+		), nil
 	}
 
 	device = w.app.WhatsmeowContainer.NewDevice()
-	return createClient(device), nil
+	return createClient(
+		w.app.Config,
+		device,
+	), nil
 }
 
 func (w *wppService) qrcode(instanceID string) {
@@ -239,7 +247,6 @@ func (w *wppService) qrcode(instanceID string) {
 			for evt := range qrChan {
 				switch evt.Event {
 				case "success":
-					fmt.Println("[qrcode]: success")
 					return
 				case "timeout":
 					fmt.Println("[qrcode]: timeout error")
@@ -370,7 +377,10 @@ func (w *wppService) handleMessage(instanceId string, evt *events.Message) {
 	}
 }
 
-func createClient(deviceStore *store.Device) *whatsmeow.Client {
+func createClient(config configs.ZapMeowConfig, deviceStore *store.Device) *whatsmeow.Client {
+	if config.Env == "production" {
+		return whatsmeow.NewClient(deviceStore, nil)
+	}
 	log := waLog.Stdout("Client", "DEBUG", true)
 	return whatsmeow.NewClient(deviceStore, log)
 }

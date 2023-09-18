@@ -21,7 +21,7 @@ type ZapMeow struct {
 	Instances          map[string]*Instance
 	Config             ZapMeowConfig
 	Wg                 *sync.WaitGroup
-	StopCh             <-chan struct{}
+	StopCh             *chan struct{}
 }
 
 func NewZapMeow(
@@ -31,7 +31,7 @@ func NewZapMeow(
 	instances map[string]*Instance,
 	config ZapMeowConfig,
 	wg *sync.WaitGroup,
-	stopCh <-chan struct{},
+	stopCh *chan struct{},
 ) *ZapMeow {
 	return &ZapMeow{
 		WhatsmeowContainer: whatsmeowContainer,

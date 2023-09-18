@@ -12,6 +12,7 @@ import (
 
 	waProto "go.mau.fi/whatsmeow/binary/proto"
 	"go.mau.fi/whatsmeow/types"
+	"go.mau.fi/whatsmeow/types/events"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -46,21 +47,22 @@ func (q *historySyncWorker) ProcessQueue() {
 	defer q.app.Wg.Done()
 	for {
 		select {
-		case <-q.app.StopCh:
+		case <-*q.app.StopCh:
 			return
 		default:
 			data, err := queue.Dequeue()
-			if err == nil && data == nil {
-				time.Sleep(time.Second)
-				continue
-			} else if err != nil {
+			if err != nil {
 				fmt.Println(err)
 				continue
 			}
 
+			if data == nil {
+				time.Sleep(time.Second)
+				continue
+			}
+
 			var evt waProto.HistorySync
-			err = proto.Unmarshal(data.History, &evt)
-			if err != nil {
+			if err := proto.Unmarshal(data.History, &evt); err != nil {
 				fmt.Println("proto error ", err)
 				continue
 			}
@@ -73,16 +75,14 @@ func (q *historySyncWorker) ProcessQueue() {
 			}
 
 			if !account.WasSynced {
-				err := q.wppService.DeleteInstanceMessages(account.InstanceID)
-				if err != nil {
+				if err := q.wppService.DeleteInstanceMessages(account.InstanceID); err != nil {
 					fmt.Println(err)
 					continue
 				}
 
-				err = q.accountService.UpdateAccount(account.InstanceID, map[string]interface{}{
+				if err := q.accountService.UpdateAccount(account.InstanceID, map[string]interface{}{
 					"WasSynced": true,
-				})
-				if err != nil {
+				}); err != nil {
 					fmt.Println(err)
 					continue
 				}
@@ -102,17 +102,28 @@ func (q *historySyncWorker) ProcessQueue() {
 					continue
 				}
 
-				var historySyncMsgs = conv.GetMessages()
-				sort.Slice(historySyncMsgs, func(i, j int) bool {
-					message1, _ := instance.Client.ParseWebMessage(chatJID, historySyncMsgs[i].GetMessage())
-					message2, _ := instance.Client.ParseWebMessage(chatJID, historySyncMsgs[j].GetMessage())
-					return message1.Info.Timestamp.After(message2.Info.Timestamp)
+				historySyncMsgs := conv.GetMessages()
+				if historySyncMsgs == nil || len(historySyncMsgs) == 0 {
+					continue
+				}
+
+				var eventsMessage []*events.Message
+				for _, msg := range historySyncMsgs {
+					parsedMsg, err := instance.Client.ParseWebMessage(chatJID, msg.GetMessage())
+					if err != nil {
+						continue
+					}
+					eventsMessage = append(eventsMessage, parsedMsg)
+				}
+
+				sort.Slice(eventsMessage, func(i, j int) bool {
+					return eventsMessage[i].Info.Timestamp.After(eventsMessage[j].Info.Timestamp)
 				})
 
-				var limit = utils.Min(q.app.Config.MessageLimit, len(historySyncMsgs))
-				var slice = historySyncMsgs[:limit]
-				for _, historySyncMsg := range slice {
-					eventMessage, _ := instance.Client.ParseWebMessage(chatJID, historySyncMsg.GetMessage())
+				limit := utils.Min(q.app.Config.MessageLimit, len(eventsMessage))
+				slice := eventsMessage[:limit]
+
+				for _, eventMessage := range slice {
 					message := q.messageService.Parse(instance, eventMessage)
 					if message != nil {
 						messages = append(messages, *message)
@@ -120,11 +131,9 @@ func (q *historySyncWorker) ProcessQueue() {
 				}
 			}
 
-			err = q.messageService.CreateMessages(&messages)
-			if err != nil {
+			if err := q.messageService.CreateMessages(&messages); err != nil {
 				fmt.Println(err)
 			}
-			continue
 		}
 	}
 }
