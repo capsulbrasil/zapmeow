@@ -143,7 +143,7 @@ func (m *messageService) downloadMessageMedia(
 		data, err := instance.Client.Download(document)
 
 		if err != nil {
-			fmt.Println("Failed to download document", err)
+			// fmt.Println("Failed to download document", err)
 			return mediaType, ""
 		}
 
@@ -154,10 +154,10 @@ func (m *messageService) downloadMessageMedia(
 			document.GetMimetype(),
 		)
 		if err != nil {
-			fmt.Println("Failed to save document", err)
+			// fmt.Println("Failed to save document", err)
 			return mediaType, ""
 		}
-		fmt.Println("Document saved")
+		// fmt.Println("Document saved")
 	}
 
 	audio := message.GetAudioMessage()
@@ -166,7 +166,7 @@ func (m *messageService) downloadMessageMedia(
 
 		data, err := instance.Client.Download(audio)
 		if err != nil {
-			fmt.Println("Failed to download audio", err)
+			// fmt.Println("Failed to download audio", err)
 			return mediaType, ""
 		}
 
@@ -178,10 +178,10 @@ func (m *messageService) downloadMessageMedia(
 		)
 
 		if err != nil {
-			fmt.Println("Failed to save audio", err)
+			// fmt.Println("Failed to save audio", err)
 			return mediaType, ""
 		}
-		fmt.Println("Audio saved")
+		// fmt.Println("Audio saved")
 	}
 
 	image := message.GetImageMessage()
@@ -211,7 +211,7 @@ func (m *messageService) downloadMessageMedia(
 		mediaType = "image"
 		data, err := instance.Client.Download(sticker)
 		if err != nil {
-			fmt.Println("Failed to download sticker", err)
+			// fmt.Println("Failed to download sticker", err)
 			return mediaType, ""
 		}
 
@@ -222,16 +222,16 @@ func (m *messageService) downloadMessageMedia(
 			sticker.GetMimetype(),
 		)
 		if err != nil {
-			fmt.Println("Failed to download sticker", err)
+			// fmt.Println("Failed to download sticker", err)
 			return mediaType, ""
 		}
 
-		fmt.Println("Sticker saved")
+		// fmt.Println("Sticker saved")
 	}
 
 	video := message.GetVideoMessage()
 	if video != nil {
-		mediaType = "video"
+		return "video", ""
 	}
 
 	if path != "" && mediaType != "" {

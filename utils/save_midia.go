@@ -18,10 +18,10 @@ func SaveMedia(instanceID string, data []byte, fileName string, mimetype string)
 
 	err = os.WriteFile(path, data, 0600)
 	if err != nil {
-		fmt.Println("failed to save file", err)
+		// fmt.Println("failed to save file", err)
 		return "", err
 	}
 
-	fmt.Println("file saved: ", path)
+	// fmt.Println("file saved: ", path)
 	return path, nil
 }
