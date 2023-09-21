@@ -249,7 +249,7 @@ func (w *wppService) qrcode(instanceID string) {
 				case "success":
 					return
 				case "timeout":
-					fmt.Println("[qrcode]: timeout error")
+					// fmt.Println("[qrcode]: timeout error")
 					err := w.accountService.UpdateAccount(instanceID, map[string]interface{}{
 						"QrCode": "",
 						"Status": "TIMEOUT",
