@@ -8,6 +8,7 @@ import (
 	"zapmeow/repositories"
 	"zapmeow/routes"
 	"zapmeow/services"
+	"zapmeow/utils"
 	"zapmeow/workers"
 
 	"github.com/go-redis/redis"
@@ -69,6 +70,10 @@ func main() {
 		Password: config.RedisPassword,
 		DB:       0,
 	})
+
+	if err := utils.Ping(redisClient); err != nil {
+		panic(err)
+	}
 
 	var wg sync.WaitGroup
 	wg.Add(1)
