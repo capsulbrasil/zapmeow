@@ -17,9 +17,14 @@ type audioMessageBody struct {
 	Phone  string
 	Base64 string
 }
+
 type sendAudioMessageController struct {
 	wppService     services.WppService
 	messageService services.MessageService
+}
+
+type sendAudioMessageResponse struct {
+	Message services.Message
 }
 
 func NewSendAudioMessageController(
@@ -40,7 +45,7 @@ func NewSendAudioMessageController(
 // @Param data body audioMessageBody true "Audio message body"
 // @Accept json
 // @Produce json
-// @Success 200 {object} map[string]interface{} "Message Send Response"
+// @Success 200 {object} sendAudioMessageResponse "Message Send Response"
 // @Router /{instanceId}/chat/send/audio [post]
 func (a *sendAudioMessageController) Handler(c *gin.Context) {
 	var body audioMessageBody
@@ -131,7 +136,7 @@ func (a *sendAudioMessageController) Handler(c *gin.Context) {
 		return
 	}
 
-	utils.RespondWithSuccess(c, gin.H{
-		"Message": a.messageService.ToJSON(message),
+	utils.RespondWithSuccess(c, sendAudioMessageResponse{
+		Message: a.messageService.ToJSON(message),
 	})
 }

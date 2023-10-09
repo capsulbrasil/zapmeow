@@ -12,6 +12,10 @@ type getMessagesController struct {
 	messageService services.MessageService
 }
 
+type getMessagesResponse struct {
+	Messages []services.Message
+}
+
 func NewGetMessagesController(
 	wppService services.WppService,
 	messageService services.MessageService,
@@ -29,7 +33,7 @@ func NewGetMessagesController(
 // @Param instanceId path string true "Instance ID"
 // @Accept json
 // @Produce json
-// @Success 200 {array} string "List of chat messages"
+// @Success 200 {object} getMessagesResponse "List of chat messages"
 // @Router /{instanceId}/chat/messages [post]
 func (m *getMessagesController) Handler(c *gin.Context) {
 	type Body struct {
@@ -58,12 +62,12 @@ func (m *getMessagesController) Handler(c *gin.Context) {
 		return
 	}
 
-	var data = []gin.H{}
+	var data []services.Message
 	for _, message := range *messages {
 		data = append(data, m.messageService.ToJSON(message))
 	}
 
-	utils.RespondWithSuccess(c, gin.H{
-		"Messages": data,
+	utils.RespondWithSuccess(c, getMessagesResponse{
+		Messages: data,
 	})
 }

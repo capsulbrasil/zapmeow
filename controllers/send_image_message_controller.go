@@ -23,6 +23,10 @@ type sendImageMessageController struct {
 	messageService services.MessageService
 }
 
+type sendImageMessageResponse struct {
+	Message services.Message
+}
+
 func NewSendImageMessageController(
 	wppService services.WppService,
 	messageService services.MessageService,
@@ -41,7 +45,7 @@ func NewSendImageMessageController(
 // @Param data body imageMessageBody true "Image message body"
 // @Accept json
 // @Produce json
-// @Success 200 {object} map[string]interface{} "Message Send Response"
+// @Success 200 {object} sendImageMessageResponse "Message Send Response"
 // @Router /{instanceId}/chat/send/image [post]
 func (i *sendImageMessageController) Handler(c *gin.Context) {
 	var body imageMessageBody
@@ -131,7 +135,7 @@ func (i *sendImageMessageController) Handler(c *gin.Context) {
 		return
 	}
 
-	utils.RespondWithSuccess(c, gin.H{
-		"Message": i.messageService.ToJSON(message),
+	utils.RespondWithSuccess(c, sendImageMessageResponse{
+		Message: i.messageService.ToJSON(message),
 	})
 }

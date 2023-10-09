@@ -7,11 +7,65 @@ definitions:
       phone:
         type: string
     type: object
+  controllers.checkPhonesResponse:
+    properties:
+      phones:
+        items:
+          $ref: '#/definitions/controllers.phone'
+        type: array
+    type: object
+  controllers.contactInfoResponse:
+    properties:
+      info:
+        $ref: '#/definitions/services.ContactInfo'
+    type: object
+  controllers.getMessagesResponse:
+    properties:
+      messages:
+        items:
+          $ref: '#/definitions/services.Message'
+        type: array
+    type: object
+  controllers.getProfileInfoResponse:
+    properties:
+      info:
+        $ref: '#/definitions/services.ContactInfo'
+    type: object
+  controllers.getQrCodeResponse:
+    properties:
+      qrCode:
+        type: string
+    type: object
+  controllers.getStatusResponse:
+    properties:
+      status:
+        type: string
+    type: object
   controllers.imageMessageBody:
     properties:
       base64:
         type: string
       phone:
+        type: string
+    type: object
+  controllers.phone:
+    properties:
+      isRegistered:
+        type: boolean
+      jid:
+        properties:
+          ad:
+            type: boolean
+          agent:
+            type: integer
+          device:
+            type: integer
+          server:
+            type: string
+          user:
+            type: string
+        type: object
+      query:
         type: string
     type: object
   controllers.phoneCheckBody:
@@ -21,11 +75,63 @@ definitions:
           type: string
         type: array
     type: object
+  controllers.sendAudioMessageResponse:
+    properties:
+      message:
+        $ref: '#/definitions/services.Message'
+    type: object
+  controllers.sendImageMessageResponse:
+    properties:
+      message:
+        $ref: '#/definitions/services.Message'
+    type: object
+  controllers.sendTextMessageResponse:
+    properties:
+      message:
+        $ref: '#/definitions/services.Message'
+    type: object
   controllers.textMessageBody:
     properties:
       phone:
         type: string
       text:
+        type: string
+    type: object
+  services.ContactInfo:
+    properties:
+      name:
+        type: string
+      phone:
+        type: string
+      picture:
+        type: string
+      status:
+        type: string
+    type: object
+  services.Message:
+    properties:
+      body:
+        type: string
+      chat:
+        type: string
+      fromMe:
+        type: boolean
+      id:
+        type: integer
+      mediaData:
+        properties:
+          base64:
+            type: string
+          mimetype:
+            type: string
+        type: object
+      mediaType:
+        type: string
+      messageID:
+        type: string
+      sender:
+        type: string
+      timestamp:
         type: string
     type: object
 host: localhost:8900
@@ -52,9 +158,7 @@ paths:
         "200":
           description: List of chat messages
           schema:
-            items:
-              type: string
-            type: array
+            $ref: '#/definitions/controllers.getMessagesResponse'
       summary: Get WhatsApp Chat Messages
       tags:
       - WhatsApp Chat
@@ -81,8 +185,7 @@ paths:
         "200":
           description: Message Send Response
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/controllers.sendAudioMessageResponse'
       summary: Send Audio Message on WhatsApp
       tags:
       - WhatsApp Chat
@@ -109,8 +212,7 @@ paths:
         "200":
           description: Message Send Response
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/controllers.sendImageMessageResponse'
       summary: Send Image Message on WhatsApp
       tags:
       - WhatsApp Chat
@@ -137,7 +239,7 @@ paths:
         "200":
           description: Message Send Response
           schema:
-            type: string
+            $ref: '#/definitions/controllers.sendTextMessageResponse'
       summary: Send Text Message on WhatsApp
       tags:
       - WhatsApp Chat
@@ -165,9 +267,7 @@ paths:
         "200":
           description: List of verified numbers
           schema:
-            items:
-              type: string
-            type: array
+            $ref: '#/definitions/controllers.checkPhonesResponse'
       summary: Check Phones on WhatsApp
       tags:
       - WhatsApp Phone Verification
@@ -193,8 +293,7 @@ paths:
         "200":
           description: Contact Information
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/controllers.contactInfoResponse'
       summary: Get Contact Information
       tags:
       - WhatsApp Contact
@@ -237,21 +336,26 @@ paths:
         "200":
           description: Profile Information
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/controllers.getProfileInfoResponse'
       summary: Get Profile Information
       tags:
       - WhatsApp Profile
   /{instanceId}/qrcode:
     get:
       description: Returns a QR code to initiate WhatsApp login.
+      parameters:
+      - description: Instance ID
+        in: path
+        name: instanceId
+        required: true
+        type: string
       produces:
-      - image/png
+      - application/json
       responses:
         "200":
-          description: PNG image containing the QR code
+          description: QR code
           schema:
-            type: file
+            $ref: '#/definitions/controllers.getQrCodeResponse'
       summary: Get WhatsApp QR Code
       tags:
       - WhatsApp Login
@@ -272,7 +376,7 @@ paths:
         "200":
           description: Status Response
           schema:
-            type: string
+            $ref: '#/definitions/controllers.getStatusResponse'
       summary: Get WhatsApp Instance Status
       tags:
       - WhatsApp Status

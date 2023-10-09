@@ -12,6 +12,10 @@ type getStatusController struct {
 	accountService services.AccountService
 }
 
+type getStatusResponse struct {
+	Status string
+}
+
 func NewGetStatusController(
 	wppService services.WppService,
 	accountService services.AccountService,
@@ -29,7 +33,7 @@ func NewGetStatusController(
 // @Param instanceId path string true "Instance ID"
 // @Accept json
 // @Produce json
-// @Success 200 {string} string "Status Response"
+// @Success 200 {object} getStatusResponse "Status Response"
 // @Router /{instanceId}/status [get]
 func (s *getStatusController) Handler(c *gin.Context) {
 	instanceID := c.Param("instanceId")
@@ -60,7 +64,7 @@ func (s *getStatusController) Handler(c *gin.Context) {
 		status = "UNPAIRED"
 	}
 
-	utils.RespondWithSuccess(c, gin.H{
-		"Status": status,
+	utils.RespondWithSuccess(c, getStatusResponse{
+		Status: status,
 	})
 }

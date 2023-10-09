@@ -20,6 +20,10 @@ type sendTextMessageController struct {
 	messageService services.MessageService
 }
 
+type sendTextMessageResponse struct {
+	Message services.Message
+}
+
 func NewSendTextMessageController(
 	wppService services.WppService,
 	messageService services.MessageService,
@@ -38,7 +42,7 @@ func NewSendTextMessageController(
 // @Param data body textMessageBody true "Text message body"
 // @Accept json
 // @Produce json
-// @Success 200 {object} string "Message Send Response"
+// @Success 200 {object} sendTextMessageResponse "Message Send Response"
 // @Router /{instanceId}/chat/send/text [post]
 func (t *sendTextMessageController) Handler(c *gin.Context) {
 	var body textMessageBody
@@ -88,7 +92,7 @@ func (t *sendTextMessageController) Handler(c *gin.Context) {
 		return
 	}
 
-	utils.RespondWithSuccess(c, gin.H{
-		"Message": t.messageService.ToJSON(message),
+	utils.RespondWithSuccess(c, sendTextMessageResponse{
+		Message: t.messageService.ToJSON(message),
 	})
 }

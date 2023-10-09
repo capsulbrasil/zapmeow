@@ -11,6 +11,10 @@ type getContactInfoController struct {
 	wppService services.WppService
 }
 
+type contactInfoResponse struct {
+	Info services.ContactInfo
+}
+
 func NewGetContactInfoController(
 	wppService services.WppService,
 ) *getContactInfoController {
@@ -27,7 +31,7 @@ func NewGetContactInfoController(
 // @Param phone query string true "Phone"
 // @Accept json
 // @Produce json
-// @Success 200 {object} map[string]interface{} "Contact Information"
+// @Success 200 {object} contactInfoResponse "Contact Information"
 // @Router /{instanceId}/contact/info [get]
 func (s *getContactInfoController) Handler(c *gin.Context) {
 	instanceID := c.Param("instanceId")
@@ -40,12 +44,12 @@ func (s *getContactInfoController) Handler(c *gin.Context) {
 	}
 
 	info, err := s.wppService.GetContactInfo(instanceID, jid)
-	if err != nil {
+	if err != nil || info == nil {
 		utils.RespondInternalServerError(c, err.Error())
 		return
 	}
 
-	utils.RespondWithSuccess(c, gin.H{
-		"Info": info,
+	utils.RespondWithSuccess(c, contactInfoResponse{
+		Info: *info,
 	})
 }

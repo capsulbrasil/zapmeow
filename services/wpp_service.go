@@ -26,12 +26,19 @@ type wppService struct {
 	accountService AccountService
 }
 
+type ContactInfo struct {
+	Phone   string
+	Name    string
+	Status  string
+	Picture string
+}
+
 type WppService interface {
 	GetInstance(instanceID string) (*configs.Instance, error)
 	GetAuthenticatedInstance(instanceID string) (*configs.Instance, error)
 	DestroyInstance(instanceID string) error
 	Logout(instanceID string) error
-	GetContactInfo(instanceID string, jid types.JID) (map[string]interface{}, error)
+	GetContactInfo(instanceID string, jid types.JID) (*ContactInfo, error)
 	DeleteInstanceMessages(instanceID string) error
 }
 
@@ -146,7 +153,7 @@ func (a *wppService) DeleteInstanceMessages(instanceID string) error {
 	return a.deleteInstanceDirectory(instanceID)
 }
 
-func (w *wppService) GetContactInfo(instanceID string, jid types.JID) (map[string]interface{}, error) {
+func (w *wppService) GetContactInfo(instanceID string, jid types.JID) (*ContactInfo, error) {
 	instance, err := w.GetAuthenticatedInstance(instanceID)
 	if err != nil {
 		return nil, err
@@ -157,7 +164,7 @@ func (w *wppService) GetContactInfo(instanceID string, jid types.JID) (map[strin
 		return nil, err
 	}
 
-	contactInfo, err := instance.Client.Store.Contacts.GetContact(jid)
+	ctInfo, err := instance.Client.Store.Contacts.GetContact(jid)
 	if err != nil {
 		return nil, err
 	}
@@ -172,11 +179,11 @@ func (w *wppService) GetContactInfo(instanceID string, jid types.JID) (map[strin
 		profilePictureURL = profilePictureInfo.URL
 	}
 
-	return map[string]interface{}{
-		"Phone":   jid.User,
-		"Name":    contactInfo.PushName,
-		"Status":  userInfo[jid].Status,
-		"Picture": profilePictureURL,
+	return &ContactInfo{
+		Phone:   jid.User,
+		Name:    ctInfo.PushName,
+		Status:  userInfo[jid].Status,
+		Picture: profilePictureURL,
 	}, nil
 }
 

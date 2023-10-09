@@ -7,6 +7,7 @@ import (
 	"mime"
 	"os"
 	"path/filepath"
+	"time"
 	"zapmeow/configs"
 	"zapmeow/models"
 	"zapmeow/repositories"
@@ -23,7 +24,22 @@ type MessageService interface {
 	CountChatMessages(instanceID string, chatJID string) (int64, error)
 	DeleteMessagesByInstanceID(instanceID string) error
 	Parse(instance *configs.Instance, msg *events.Message) *models.Message
-	ToJSON(message models.Message) map[string]interface{}
+	ToJSON(message models.Message) Message
+}
+
+type Message struct {
+	ID        uint
+	Sender    string
+	Chat      string
+	MessageID string
+	FromMe    bool
+	Timestamp time.Time
+	Body      string
+	MediaType string
+	MediaData *struct {
+		Mimetype string
+		Base64   string
+	}
 }
 
 type messageService struct {
@@ -93,16 +109,16 @@ func (m *messageService) Parse(instance *configs.Instance, msg *events.Message) 
 	}
 }
 
-func (m *messageService) ToJSON(message models.Message) map[string]interface{} {
-	messageJson := map[string]interface{}{
-		"ID":        message.ID,
-		"Sender":    message.SenderJID,
-		"Chat":      message.ChatJID,
-		"MessageID": message.MessageID,
-		"FromMe":    message.FromMe,
-		"Timestamp": message.Timestamp,
-		"Body":      message.Body,
-		"MediaType": message.MediaType,
+func (m *messageService) ToJSON(message models.Message) Message {
+	messageJson := Message{
+		ID:        message.ID,
+		Sender:    message.SenderJID,
+		Chat:      message.ChatJID,
+		MessageID: message.MessageID,
+		FromMe:    message.FromMe,
+		Timestamp: message.Timestamp,
+		Body:      message.Body,
+		MediaType: message.MediaType,
 	}
 
 	if message.MediaType != "" {
@@ -112,9 +128,12 @@ func (m *messageService) ToJSON(message models.Message) map[string]interface{} {
 		} else {
 			mimetype := mime.TypeByExtension(filepath.Ext(message.MediaPath))
 			base64 := base64.StdEncoding.EncodeToString(data)
-			messageJson["MediaData"] = map[string]interface{}{
-				"Mimetype": mimetype,
-				"Base64":   base64,
+			messageJson.MediaData = &struct {
+				Mimetype string
+				Base64   string
+			}{
+				Mimetype: mimetype,
+				Base64:   base64,
 			}
 		}
 	}

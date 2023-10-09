@@ -13,6 +13,10 @@ type getQrCodeController struct {
 	accountService services.AccountService
 }
 
+type getQrCodeResponse struct {
+	QrCode string
+}
+
 func NewGetQrCodeController(
 	wppService services.WppService,
 	messageService services.MessageService,
@@ -29,8 +33,9 @@ func NewGetQrCodeController(
 // @Summary Get WhatsApp QR Code
 // @Description Returns a QR code to initiate WhatsApp login.
 // @Tags WhatsApp Login
-// @Produce image/png
-// @Success 200 {file} file "PNG image containing the QR code"
+// @Param instanceId path string true "Instance ID"
+// @Produce json
+// @Success 200 {object} getQrCodeResponse "QR Code"
 // @Router /{instanceId}/qrcode [get]
 func (q *getQrCodeController) Handler(c *gin.Context) {
 	instanceID := c.Param("instanceId")
@@ -52,7 +57,7 @@ func (q *getQrCodeController) Handler(c *gin.Context) {
 		return
 	}
 
-	utils.RespondWithSuccess(c, gin.H{
-		"QrCode": account.QrCode,
+	utils.RespondWithSuccess(c, getQrCodeResponse{
+		QrCode: account.QrCode,
 	})
 }

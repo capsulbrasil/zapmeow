@@ -11,6 +11,22 @@ type phoneCheckBody struct {
 	Phones []string
 }
 
+type phone struct {
+	Query        string
+	IsRegistered bool
+	JID          struct {
+		AD     bool
+		User   string
+		Agent  uint8
+		Device uint8
+		Server string
+	}
+}
+
+type checkPhonesResponse struct {
+	Phones []phone
+}
+
 type checkPhonesController struct {
 	wppService services.WppService
 }
@@ -31,7 +47,7 @@ func NewCheckPhonesController(
 // @Param data body phoneCheckBody true "Phone list"
 // @Accept json
 // @Produce json
-// @Success 200 {array} string "List of verified numbers"
+// @Success 200 {object} checkPhonesResponse "List of verified numbers"
 // @Router /{instanceId}/check/phones [post]
 func (p *checkPhonesController) Handler(c *gin.Context) {
 	var body phoneCheckBody
@@ -53,22 +69,28 @@ func (p *checkPhonesController) Handler(c *gin.Context) {
 		return
 	}
 
-	data := make([]gin.H, len(phones))
+	data := make([]phone, len(phones))
 	for i, p := range phones {
-		data[i] = gin.H{
-			"Query":        p.Query,
-			"IsRegistered": p.IsIn,
-			"JID": gin.H{
-				"AD":     p.JID.AD,
-				"User":   p.JID.User,
-				"Agent":  p.JID.Agent,
-				"Device": p.JID.Device,
-				"Server": p.JID.Server,
+		data[i] = phone{
+			Query:        p.Query,
+			IsRegistered: p.IsIn,
+			JID: struct {
+				AD     bool
+				User   string
+				Agent  uint8
+				Device uint8
+				Server string
+			}{
+				AD:     p.JID.AD,
+				User:   p.JID.User,
+				Agent:  p.JID.Agent,
+				Device: p.JID.Device,
+				Server: p.JID.Server,
 			},
 		}
 	}
 
-	utils.RespondWithSuccess(c, gin.H{
-		"Phones": data,
+	utils.RespondWithSuccess(c, checkPhonesResponse{
+		Phones: data,
 	})
 }

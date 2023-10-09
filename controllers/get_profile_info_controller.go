@@ -11,6 +11,10 @@ type getProfileInfoController struct {
 	wppService services.WppService
 }
 
+type getProfileInfoResponse struct {
+	Info services.ContactInfo
+}
+
 func NewGetProfileInfoController(
 	wppService services.WppService,
 ) *getProfileInfoController {
@@ -26,7 +30,7 @@ func NewGetProfileInfoController(
 // @Param instanceId path string true "Instance ID"
 // @Accept json
 // @Produce json
-// @Success 200 {object} map[string]interface{} "Profile Information"
+// @Success 200 {object} getProfileInfoResponse "Profile Information"
 // @Router /{instanceId}/profile [get]
 func (s *getProfileInfoController) Handler(c *gin.Context) {
 	instanceID := c.Param("instanceId")
@@ -44,12 +48,12 @@ func (s *getProfileInfoController) Handler(c *gin.Context) {
 	}
 
 	info, err := s.wppService.GetContactInfo(instanceID, jid)
-	if err != nil {
+	if err != nil || info == nil {
 		utils.RespondInternalServerError(c, err.Error())
 		return
 	}
 
-	utils.RespondWithSuccess(c, gin.H{
-		"Info": info,
+	utils.RespondWithSuccess(c, getProfileInfoResponse{
+		Info: *info,
 	})
 }

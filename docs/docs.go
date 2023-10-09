@@ -41,10 +41,7 @@ const docTemplate = `{
                     "200": {
                         "description": "List of chat messages",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/controllers.getMessagesResponse"
                         }
                     }
                 }
@@ -85,8 +82,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Message Send Response",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/controllers.sendAudioMessageResponse"
                         }
                     }
                 }
@@ -127,8 +123,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Message Send Response",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/controllers.sendImageMessageResponse"
                         }
                     }
                 }
@@ -169,7 +164,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Message Send Response",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/controllers.sendTextMessageResponse"
                         }
                     }
                 }
@@ -210,10 +205,7 @@ const docTemplate = `{
                     "200": {
                         "description": "List of verified numbers",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/controllers.checkPhonesResponse"
                         }
                     }
                 }
@@ -252,8 +244,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Contact Information",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/controllers.contactInfoResponse"
                         }
                     }
                 }
@@ -318,8 +309,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Profile Information",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/controllers.getProfileInfoResponse"
                         }
                     }
                 }
@@ -329,17 +319,26 @@ const docTemplate = `{
             "get": {
                 "description": "Returns a QR code to initiate WhatsApp login.",
                 "produces": [
-                    "image/png"
+                    "application/json"
                 ],
                 "tags": [
                     "WhatsApp Login"
                 ],
                 "summary": "Get WhatsApp QR Code",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Instance ID",
+                        "name": "instanceId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
-                        "description": "PNG image containing the QR code",
+                        "description": "QR code",
                         "schema": {
-                            "type": "file"
+                            "$ref": "#/definitions/controllers.getQrCodeResponse"
                         }
                     }
                 }
@@ -371,7 +370,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Status Response",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/controllers.getStatusResponse"
                         }
                     }
                 }
@@ -390,6 +389,60 @@ const docTemplate = `{
                 }
             }
         },
+        "controllers.checkPhonesResponse": {
+            "type": "object",
+            "properties": {
+                "phones": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/controllers.phone"
+                    }
+                }
+            }
+        },
+        "controllers.contactInfoResponse": {
+            "type": "object",
+            "properties": {
+                "info": {
+                    "$ref": "#/definitions/services.ContactInfo"
+                }
+            }
+        },
+        "controllers.getMessagesResponse": {
+            "type": "object",
+            "properties": {
+                "messages": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/services.Message"
+                    }
+                }
+            }
+        },
+        "controllers.getProfileInfoResponse": {
+            "type": "object",
+            "properties": {
+                "info": {
+                    "$ref": "#/definitions/services.ContactInfo"
+                }
+            }
+        },
+        "controllers.getQrCodeResponse": {
+            "type": "object",
+            "properties": {
+                "qrCode": {
+                    "type": "string"
+                }
+            }
+        },
+        "controllers.getStatusResponse": {
+            "type": "object",
+            "properties": {
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
         "controllers.imageMessageBody": {
             "type": "object",
             "properties": {
@@ -397,6 +450,37 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "phone": {
+                    "type": "string"
+                }
+            }
+        },
+        "controllers.phone": {
+            "type": "object",
+            "properties": {
+                "isRegistered": {
+                    "type": "boolean"
+                },
+                "jid": {
+                    "type": "object",
+                    "properties": {
+                        "ad": {
+                            "type": "boolean"
+                        },
+                        "agent": {
+                            "type": "integer"
+                        },
+                        "device": {
+                            "type": "integer"
+                        },
+                        "server": {
+                            "type": "string"
+                        },
+                        "user": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "query": {
                     "type": "string"
                 }
             }
@@ -412,6 +496,30 @@ const docTemplate = `{
                 }
             }
         },
+        "controllers.sendAudioMessageResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "$ref": "#/definitions/services.Message"
+                }
+            }
+        },
+        "controllers.sendImageMessageResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "$ref": "#/definitions/services.Message"
+                }
+            }
+        },
+        "controllers.sendTextMessageResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "$ref": "#/definitions/services.Message"
+                }
+            }
+        },
         "controllers.textMessageBody": {
             "type": "object",
             "properties": {
@@ -419,6 +527,63 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "text": {
+                    "type": "string"
+                }
+            }
+        },
+        "services.ContactInfo": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "picture": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "services.Message": {
+            "type": "object",
+            "properties": {
+                "body": {
+                    "type": "string"
+                },
+                "chat": {
+                    "type": "string"
+                },
+                "fromMe": {
+                    "type": "boolean"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "mediaData": {
+                    "type": "object",
+                    "properties": {
+                        "base64": {
+                            "type": "string"
+                        },
+                        "mimetype": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "mediaType": {
+                    "type": "string"
+                },
+                "messageID": {
+                    "type": "string"
+                },
+                "sender": {
+                    "type": "string"
+                },
+                "timestamp": {
                     "type": "string"
                 }
             }
