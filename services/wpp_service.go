@@ -12,7 +12,9 @@ import (
 	"zapmeow/queues"
 	"zapmeow/utils"
 
+	"github.com/vincent-petithory/dataurl"
 	"go.mau.fi/whatsmeow"
+	waProto "go.mau.fi/whatsmeow/binary/proto"
 	"go.mau.fi/whatsmeow/store"
 	"go.mau.fi/whatsmeow/types"
 	"go.mau.fi/whatsmeow/types/events"
@@ -33,12 +35,23 @@ type ContactInfo struct {
 	Picture string
 }
 
+type SendMessageResponse struct {
+	ID        string
+	Sender    types.JID
+	Timestamp time.Time
+}
+
 type WppService interface {
 	GetInstance(instanceID string) (*configs.Instance, error)
 	GetAuthenticatedInstance(instanceID string) (*configs.Instance, error)
+	GetContactInfo(instanceID string, jid types.JID) (*ContactInfo, error)
+	SendMessage(instanceID string, jid types.JID, message *waProto.Message) (*SendMessageResponse, error)
+	SendTextMessage(instanceID string, jid types.JID, message string) (*SendMessageResponse, error)
+	SendAudioMessage(instanceID string, jid types.JID, audio *dataurl.DataURL, mimitype string) (*SendMessageResponse, error)
+	SendImageMessage(instanceID string, jid types.JID, image *dataurl.DataURL, mimitype string) (*SendMessageResponse, error)
+	UploadMedia(instanceID string, media *dataurl.DataURL, type_ string) (*whatsmeow.UploadResponse, error)
 	DestroyInstance(instanceID string) error
 	Logout(instanceID string) error
-	GetContactInfo(instanceID string, jid types.JID) (*ContactInfo, error)
 	DeleteInstanceMessages(instanceID string) error
 }
 
@@ -105,6 +118,92 @@ func (w *wppService) GetAuthenticatedInstance(instanceID string) (*configs.Insta
 	}
 
 	return instance, nil
+}
+
+func (w *wppService) SendTextMessage(instanceID string, jid types.JID, text string) (*SendMessageResponse, error) {
+	message := &waProto.Message{
+		ExtendedTextMessage: &waProto.ExtendedTextMessage{
+			Text: &text,
+		},
+	}
+
+	return w.SendMessage(instanceID, jid, message)
+}
+
+func (w *wppService) SendAudioMessage(instanceID string, jid types.JID, audioURL *dataurl.DataURL, mimitype string) (*SendMessageResponse, error) {
+	uploaded, err := w.UploadMedia(instanceID, audioURL, "audio")
+	if err != nil {
+		return nil, err
+	}
+
+	message := &waProto.Message{
+		AudioMessage: &waProto.AudioMessage{
+			Ptt:           proto.Bool(true),
+			Url:           proto.String(uploaded.URL),
+			DirectPath:    proto.String(uploaded.DirectPath),
+			MediaKey:      uploaded.MediaKey,
+			Mimetype:      proto.String(mimitype),
+			FileEncSha256: uploaded.FileEncSHA256,
+			FileSha256:    uploaded.FileSHA256,
+			FileLength:    proto.Uint64(uint64(len(audioURL.Data))),
+		},
+	}
+
+	return w.SendMessage(instanceID, jid, message)
+}
+
+func (w *wppService) SendImageMessage(instanceID string, jid types.JID, imageURL *dataurl.DataURL, mimitype string) (*SendMessageResponse, error) {
+	uploaded, err := w.UploadMedia(instanceID, imageURL, "image")
+	if err != nil {
+		return nil, err
+	}
+
+	message := &waProto.Message{
+		ImageMessage: &waProto.ImageMessage{
+			Url:           proto.String(uploaded.URL),
+			DirectPath:    proto.String(uploaded.DirectPath),
+			MediaKey:      uploaded.MediaKey,
+			Mimetype:      proto.String(mimitype),
+			FileEncSha256: uploaded.FileEncSHA256,
+			FileSha256:    uploaded.FileSHA256,
+			FileLength:    proto.Uint64(uint64(len(imageURL.Data))),
+		},
+	}
+
+	return w.SendMessage(instanceID, jid, message)
+}
+
+func (w *wppService) SendMessage(instanceID string, jid types.JID, message *waProto.Message) (*SendMessageResponse, error) {
+	instance, err := w.GetAuthenticatedInstance(instanceID)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := instance.Client.SendMessage(context.Background(), jid, message)
+	if err != nil {
+		return nil, err
+	}
+
+	return &SendMessageResponse{
+		ID:        resp.ID,
+		Sender:    *instance.Client.Store.ID,
+		Timestamp: resp.Timestamp,
+	}, nil
+}
+
+func (w *wppService) UploadMedia(instanceID string, media *dataurl.DataURL, type_ string) (*whatsmeow.UploadResponse, error) {
+	instance, err := w.GetAuthenticatedInstance(instanceID)
+	if err != nil {
+		return nil, err
+	}
+
+	mediaType := whatsmeow.MediaAudio
+	if type_ == "image" {
+		mediaType = whatsmeow.MediaImage
+	}
+
+	uploaded, err := instance.Client.Upload(context.Background(), media.Data, mediaType)
+	return &uploaded, nil
 }
 
 func (w *wppService) DestroyInstance(instanceID string) error {

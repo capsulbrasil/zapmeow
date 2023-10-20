@@ -1,16 +1,12 @@
 package controllers
 
 import (
-	"context"
 	"zapmeow/models"
 	"zapmeow/services"
 	"zapmeow/utils"
 
 	"github.com/gin-gonic/gin"
 	"github.com/vincent-petithory/dataurl"
-	"go.mau.fi/whatsmeow"
-	waProto "go.mau.fi/whatsmeow/binary/proto"
-	"google.golang.org/protobuf/proto"
 )
 
 type audioMessageBody struct {
@@ -67,42 +63,13 @@ func (a *sendAudioMessageController) Handler(c *gin.Context) {
 		return
 	}
 
-	instance, err := a.wppService.GetAuthenticatedInstance(instanceID)
-	if err != nil {
-		utils.RespondInternalServerError(c, err.Error())
-		return
-	}
-
 	audioURL, err := dataurl.DecodeString(body.Base64)
 	if err != nil {
 		utils.RespondInternalServerError(c, err.Error())
 		return
 	}
 
-	uploaded, err := instance.Client.Upload(
-		context.Background(),
-		audioURL.Data,
-		whatsmeow.MediaAudio,
-	)
-	if err != nil {
-		utils.RespondInternalServerError(c, err.Error())
-		return
-	}
-
-	msg := &waProto.Message{
-		AudioMessage: &waProto.AudioMessage{
-			Ptt:           proto.Bool(true),
-			Url:           proto.String(uploaded.URL),
-			DirectPath:    proto.String(uploaded.DirectPath),
-			MediaKey:      uploaded.MediaKey,
-			Mimetype:      proto.String(mimitype),
-			FileEncSha256: uploaded.FileEncSHA256,
-			FileSha256:    uploaded.FileSHA256,
-			FileLength:    proto.Uint64(uint64(len(audioURL.Data))),
-		},
-	}
-
-	resp, err := instance.Client.SendMessage(context.Background(), jid, msg)
+	resp, err := a.wppService.SendImageMessage(instanceID, jid, audioURL, mimitype)
 	if err != nil {
 		utils.RespondInternalServerError(c, err.Error())
 		return
@@ -121,8 +88,8 @@ func (a *sendAudioMessageController) Handler(c *gin.Context) {
 
 	message := models.Message{
 		ChatJID:    jid.User,
-		SenderJID:  instance.Client.Store.ID.User,
-		InstanceID: instance.ID,
+		SenderJID:  resp.Sender.User,
+		InstanceID: instanceID,
 		MediaType:  "audio",
 		MediaPath:  path,
 		Timestamp:  resp.Timestamp,

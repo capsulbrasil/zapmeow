@@ -1,13 +1,11 @@
 package controllers
 
 import (
-	"context"
 	"zapmeow/models"
 	"zapmeow/services"
 	"zapmeow/utils"
 
 	"github.com/gin-gonic/gin"
-	waProto "go.mau.fi/whatsmeow/binary/proto"
 )
 
 type textMessageBody struct {
@@ -56,21 +54,9 @@ func (t *sendTextMessageController) Handler(c *gin.Context) {
 		utils.RespondBadRequest(c, "Invalid phone")
 		return
 	}
-	instanceId := c.Param("instanceId")
+	instanceID := c.Param("instanceId")
 
-	instance, err := t.wppService.GetAuthenticatedInstance(instanceId)
-	if err != nil {
-		utils.RespondInternalServerError(c, err.Error())
-		return
-	}
-
-	msg := &waProto.Message{
-		ExtendedTextMessage: &waProto.ExtendedTextMessage{
-			Text: &body.Text,
-		},
-	}
-
-	resp, err := instance.Client.SendMessage(context.Background(), jid, msg)
+	resp, err := t.wppService.SendTextMessage(instanceID, jid, body.Text)
 	if err != nil {
 		utils.RespondInternalServerError(c, err.Error())
 		return
@@ -78,8 +64,8 @@ func (t *sendTextMessageController) Handler(c *gin.Context) {
 
 	message := models.Message{
 		ChatJID:    jid.User,
-		SenderJID:  instance.Client.Store.ID.User,
-		InstanceID: instance.ID,
+		SenderJID:  resp.Sender.User,
+		InstanceID: instanceID,
 		Body:       body.Text,
 		Timestamp:  resp.Timestamp,
 		FromMe:     true,

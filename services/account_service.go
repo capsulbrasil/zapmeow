@@ -10,7 +10,6 @@ type AccountService interface {
 	GetConnectedAccounts() ([]models.Account, error)
 	GetAccountByInstanceID(instanceID string) (*models.Account, error)
 	UpdateAccount(instanceID string, data map[string]interface{}) error
-	// DeleteAccountInfos(instanceID string) error
 }
 
 type accountService struct {
