@@ -4,8 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
-	"path/filepath"
 	"time"
 	"zapmeow/configs"
 	"zapmeow/models"
@@ -50,9 +48,8 @@ type WppService interface {
 	SendAudioMessage(instanceID string, jid types.JID, audio *dataurl.DataURL, mimitype string) (*SendMessageResponse, error)
 	SendImageMessage(instanceID string, jid types.JID, image *dataurl.DataURL, mimitype string) (*SendMessageResponse, error)
 	UploadMedia(instanceID string, media *dataurl.DataURL, type_ string) (*whatsmeow.UploadResponse, error)
-	DestroyInstance(instanceID string) error
 	Logout(instanceID string) error
-	DeleteInstanceMessages(instanceID string) error
+	destroyInstance(instanceID string) error
 }
 
 func NewWppService(
@@ -206,13 +203,13 @@ func (w *wppService) UploadMedia(instanceID string, media *dataurl.DataURL, type
 	return &uploaded, nil
 }
 
-func (w *wppService) DestroyInstance(instanceID string) error {
+func (w *wppService) destroyInstance(instanceID string) error {
 	instance, err := w.GetInstance(instanceID)
 	if err != nil {
 		return err
 	}
 
-	err = w.DeleteInstanceMessages(instanceID)
+	err = w.accountService.DeleteAccountMessages(instanceID)
 	if err != nil {
 		return err
 	}
@@ -241,15 +238,7 @@ func (w *wppService) Logout(instanceID string) error {
 		return err
 	}
 
-	return w.DestroyInstance(instanceID)
-}
-
-func (a *wppService) DeleteInstanceMessages(instanceID string) error {
-	err := a.messageService.DeleteMessagesByInstanceID(instanceID)
-	if err != nil {
-		return err
-	}
-	return a.deleteInstanceDirectory(instanceID)
+	return w.destroyInstance(instanceID)
 }
 
 func (w *wppService) GetContactInfo(instanceID string, jid types.JID) (*ContactInfo, error) {
@@ -380,23 +369,6 @@ func (w *wppService) qrcode(instanceID string) {
 	}
 }
 
-func (a *wppService) deleteInstanceDirectory(instanceID string) error {
-	dirPath := utils.MakeAccountStoragePath(instanceID)
-	err := filepath.Walk(dirPath, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		if !info.IsDir() {
-			err = os.Remove(path)
-			if err != nil {
-				return err
-			}
-			fmt.Printf("File removed: %s\n", path)
-		}
-		return nil
-	})
-	return err
-}
 func (w *wppService) eventHandler(instanceID string, rawEvt interface{}) {
 	switch evt := rawEvt.(type) {
 	case *events.Message:
@@ -445,7 +417,7 @@ func (w *wppService) handleConnected(instanceID string) {
 }
 
 func (w *wppService) handleLoggedOut(instanceID string) {
-	err := w.DestroyInstance(instanceID)
+	err := w.destroyInstance(instanceID)
 	if err != nil {
 		fmt.Println("Error", err)
 	}

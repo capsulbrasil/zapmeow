@@ -75,7 +75,7 @@ func (q *historySyncWorker) ProcessQueue() {
 			}
 
 			if !account.WasSynced {
-				if err := q.wppService.DeleteInstanceMessages(account.InstanceID); err != nil {
+				if err := q.accountService.DeleteAccountMessages(account.InstanceID); err != nil {
 					fmt.Println(err)
 					continue
 				}
