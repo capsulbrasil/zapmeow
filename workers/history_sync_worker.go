@@ -109,11 +109,11 @@ func (q *historySyncWorker) ProcessQueue() {
 
 				var eventsMessage []*events.Message
 				for _, msg := range historySyncMsgs {
-					parsedMsg, err := instance.Client.ParseWebMessage(chatJID, msg.GetMessage())
+					parsedMessage, err := instance.Client.ParseWebMessage(chatJID, msg.GetMessage())
 					if err != nil {
 						continue
 					}
-					eventsMessage = append(eventsMessage, parsedMsg)
+					eventsMessage = append(eventsMessage, parsedMessage)
 				}
 
 				sort.Slice(eventsMessage, func(i, j int) bool {
@@ -124,9 +124,38 @@ func (q *historySyncWorker) ProcessQueue() {
 				slice := eventsMessage[:limit]
 
 				for _, eventMessage := range slice {
-					message := q.messageService.Parse(instance, eventMessage)
-					if message != nil {
-						messages = append(messages, *message)
+					parsedEventMessage, err := q.wppService.ParseEventMessage(instance, eventMessage)
+
+					message := models.Message{
+						SenderJID:  parsedEventMessage.SenderJID,
+						ChatJID:    parsedEventMessage.ChatJID,
+						InstanceID: parsedEventMessage.InstanceID,
+						MessageID:  parsedEventMessage.MessageID,
+						Timestamp:  parsedEventMessage.Timestamp,
+						Body:       parsedEventMessage.Body,
+						FromMe:     parsedEventMessage.FromMe,
+					}
+
+					if parsedEventMessage.MediaType != nil {
+						path, err := utils.SaveMedia(
+							instance.ID,
+							parsedEventMessage.MessageID,
+							*parsedEventMessage.Media,
+							*parsedEventMessage.Mimetype,
+						)
+
+						if err != nil {
+							fmt.Println(err)
+						}
+
+						message.MediaType = parsedEventMessage.MediaType.String()
+						message.MediaPath = path
+					}
+
+					fmt.Println(message)
+
+					if err != nil {
+						messages = append(messages, message)
 					}
 				}
 			}

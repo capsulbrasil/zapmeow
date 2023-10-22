@@ -5,16 +5,10 @@ import (
 	"fmt"
 	"io/ioutil"
 	"mime"
-	"os"
 	"path/filepath"
 	"time"
-	"zapmeow/configs"
 	"zapmeow/models"
 	"zapmeow/repositories"
-	"zapmeow/utils"
-
-	waProto "go.mau.fi/whatsmeow/binary/proto"
-	"go.mau.fi/whatsmeow/types/events"
 )
 
 type MessageService interface {
@@ -23,7 +17,6 @@ type MessageService interface {
 	GetChatMessages(instanceID string, chatJID string) (*[]models.Message, error)
 	CountChatMessages(instanceID string, chatJID string) (int64, error)
 	DeleteMessagesByInstanceID(instanceID string) error
-	Parse(instance *configs.Instance, msg *events.Message) *models.Message
 	ToJSON(message models.Message) Message
 }
 
@@ -72,43 +65,6 @@ func (m *messageService) DeleteMessagesByInstanceID(instanceID string) error {
 	return m.messageRep.DeleteMessagesByInstanceID(instanceID)
 }
 
-func (m *messageService) Parse(instance *configs.Instance, msg *events.Message) *models.Message {
-	mediaType, path := m.downloadMessageMedia(
-		instance,
-		msg.Message,
-		msg.Info.ID,
-	)
-
-	var body = m.getTextMessage(msg.Message)
-	if mediaType == "" && body == "" {
-		return nil
-	}
-
-	if mediaType != "" {
-		return &models.Message{
-			InstanceID: instance.ID,
-			MessageID:  msg.Info.ID,
-			FromMe:     msg.Info.MessageSource.IsFromMe,
-			ChatJID:    msg.Info.Chat.User,
-			SenderJID:  msg.Info.Sender.User,
-			Body:       body,
-			MediaPath:  mediaType,
-			MediaType:  path,
-			Timestamp:  msg.Info.Timestamp,
-		}
-	}
-
-	return &models.Message{
-		InstanceID: instance.ID,
-		MessageID:  msg.Info.ID,
-		FromMe:     msg.Info.MessageSource.IsFromMe,
-		ChatJID:    msg.Info.Chat.User,
-		SenderJID:  msg.Info.Sender.User,
-		Body:       body,
-		Timestamp:  msg.Info.Timestamp,
-	}
-}
-
 func (m *messageService) ToJSON(message models.Message) Message {
 	messageJson := Message{
 		ID:        message.ID,
@@ -139,131 +95,4 @@ func (m *messageService) ToJSON(message models.Message) Message {
 	}
 
 	return messageJson
-}
-
-func (m *messageService) downloadMessageMedia(
-	instance *configs.Instance,
-	message *waProto.Message,
-	fileName string,
-) (string, string) {
-	path := ""
-	mediaType := ""
-
-	dirPath := utils.MakeAccountStoragePath(instance.ID)
-	err := os.MkdirAll(dirPath, 0751)
-	if err != nil {
-		return "", ""
-	}
-
-	document := message.GetDocumentMessage()
-	if document != nil {
-		mediaType = "document"
-
-		data, err := instance.Client.Download(document)
-
-		if err != nil {
-			// fmt.Println("Failed to download document", err)
-			return mediaType, ""
-		}
-
-		path, err = utils.SaveMedia(
-			instance.ID,
-			data,
-			fileName,
-			document.GetMimetype(),
-		)
-		if err != nil {
-			// fmt.Println("Failed to save document", err)
-			return mediaType, ""
-		}
-		// fmt.Println("Document saved")
-	}
-
-	audio := message.GetAudioMessage()
-	if audio != nil {
-		mediaType = "audio"
-
-		data, err := instance.Client.Download(audio)
-		if err != nil {
-			// fmt.Println("Failed to download audio", err)
-			return mediaType, ""
-		}
-
-		path, err = utils.SaveMedia(
-			instance.ID,
-			data,
-			fileName,
-			audio.GetMimetype(),
-		)
-
-		if err != nil {
-			// fmt.Println("Failed to save audio", err)
-			return mediaType, ""
-		}
-		// fmt.Println("Audio saved")
-	}
-
-	image := message.GetImageMessage()
-	if image != nil {
-		mediaType = "image"
-		data, err := instance.Client.Download(image)
-		if err != nil {
-			fmt.Println("Failed to download image", err)
-			return mediaType, ""
-		}
-
-		path, err = utils.SaveMedia(
-			instance.ID,
-			data,
-			fileName,
-			image.GetMimetype(),
-		)
-		if err != nil {
-			fmt.Println("Failed to save image", err)
-			return mediaType, ""
-		}
-		fmt.Println("Image saved")
-	}
-
-	sticker := message.GetStickerMessage()
-	if sticker != nil {
-		mediaType = "image"
-		data, err := instance.Client.Download(sticker)
-		if err != nil {
-			// fmt.Println("Failed to download sticker", err)
-			return mediaType, ""
-		}
-
-		path, err = utils.SaveMedia(
-			instance.ID,
-			data,
-			fileName,
-			sticker.GetMimetype(),
-		)
-		if err != nil {
-			// fmt.Println("Failed to download sticker", err)
-			return mediaType, ""
-		}
-
-		// fmt.Println("Sticker saved")
-	}
-
-	video := message.GetVideoMessage()
-	if video != nil {
-		return "video", ""
-	}
-
-	if path != "" && mediaType != "" {
-		return mediaType, path
-	}
-
-	return "", ""
-}
-
-func (m *messageService) getTextMessage(message *waProto.Message) string {
-	extendedTextMessage := message.GetExtendedTextMessage()
-	if extendedTextMessage != nil {
-		return *extendedTextMessage.Text
-	}
-	return message.GetConversation()
 }

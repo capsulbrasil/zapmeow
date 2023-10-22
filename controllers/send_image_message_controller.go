@@ -77,8 +77,8 @@ func (i *sendImageMessageController) Handler(c *gin.Context) {
 
 	path, err := utils.SaveMedia(
 		instanceID,
-		imageURL.Data,
 		resp.ID,
+		imageURL.Data,
 		mimitype,
 	)
 	if err != nil {
@@ -87,14 +87,14 @@ func (i *sendImageMessageController) Handler(c *gin.Context) {
 	}
 
 	message := models.Message{
+		FromMe:     true,
 		ChatJID:    jid.User,
 		SenderJID:  resp.Sender.User,
 		InstanceID: instanceID,
+		Timestamp:  resp.Timestamp,
+		MessageID:  resp.ID,
 		MediaType:  "image",
 		MediaPath:  path,
-		Timestamp:  resp.Timestamp,
-		FromMe:     true,
-		MessageID:  resp.ID,
 	}
 
 	err = i.messageService.CreateMessage(&message)

@@ -77,8 +77,8 @@ func (a *sendAudioMessageController) Handler(c *gin.Context) {
 
 	path, err := utils.SaveMedia(
 		instanceID,
-		audioURL.Data,
 		resp.ID,
+		audioURL.Data,
 		mimitype,
 	)
 	if err != nil {
@@ -87,14 +87,14 @@ func (a *sendAudioMessageController) Handler(c *gin.Context) {
 	}
 
 	message := models.Message{
+		FromMe:     true,
 		ChatJID:    jid.User,
 		SenderJID:  resp.Sender.User,
 		InstanceID: instanceID,
+		Timestamp:  resp.Timestamp,
+		MessageID:  resp.ID,
 		MediaType:  "audio",
 		MediaPath:  path,
-		Timestamp:  resp.Timestamp,
-		FromMe:     true,
-		MessageID:  resp.ID,
 	}
 
 	err = a.messageService.CreateMessage(&message)

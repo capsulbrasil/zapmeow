@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"time"
 	"zapmeow/configs"
 	"zapmeow/models"
@@ -39,17 +40,65 @@ type SendMessageResponse struct {
 	Timestamp time.Time
 }
 
+type DownloadedMedia struct {
+	Data     []byte
+	Type     MediaType
+	Mimetype string
+}
+
+type ParsedEventMessage struct {
+	InstanceID string
+	Body       string
+	SenderJID  string
+	ChatJID    string
+	MessageID  string
+	Timestamp  time.Time
+	FromMe     bool
+	MediaType  *MediaType
+	Media      *[]byte
+	Mimetype   *string
+}
+
+type MediaType int
+
+const (
+	Audio MediaType = iota
+	Image
+	Document
+	Sticker
+	Video
+)
+
+func (m MediaType) String() string {
+	switch m {
+	case Audio:
+		return "audio"
+	case Document:
+		return "document"
+	case Sticker:
+		return "sticker"
+	case Video:
+		return "video"
+	case Image:
+		return "image"
+	}
+	return "unknown"
+}
+
 type WppService interface {
 	GetInstance(instanceID string) (*configs.Instance, error)
 	GetAuthenticatedInstance(instanceID string) (*configs.Instance, error)
 	GetContactInfo(instanceID string, jid types.JID) (*ContactInfo, error)
-	SendMessage(instanceID string, jid types.JID, message *waProto.Message) (*SendMessageResponse, error)
-	SendTextMessage(instanceID string, jid types.JID, message string) (*SendMessageResponse, error)
-	SendAudioMessage(instanceID string, jid types.JID, audio *dataurl.DataURL, mimitype string) (*SendMessageResponse, error)
-	SendImageMessage(instanceID string, jid types.JID, image *dataurl.DataURL, mimitype string) (*SendMessageResponse, error)
-	UploadMedia(instanceID string, media *dataurl.DataURL, type_ string) (*whatsmeow.UploadResponse, error)
+	SendMessage(instanceID string, jid types.JID, message *waProto.Message) (SendMessageResponse, error)
+	SendTextMessage(instanceID string, jid types.JID, message string) (SendMessageResponse, error)
+	SendAudioMessage(instanceID string, jid types.JID, audio *dataurl.DataURL, mimitype string) (SendMessageResponse, error)
+	SendImageMessage(instanceID string, jid types.JID, image *dataurl.DataURL, mimitype string) (SendMessageResponse, error)
+	ParseEventMessage(instance *configs.Instance, message *events.Message) (ParsedEventMessage, error)
 	Logout(instanceID string) error
 	destroyInstance(instanceID string) error
+	getTextMessage(message *waProto.Message) string
+	downloadMedia(instance *configs.Instance, message *waProto.Message) (*DownloadedMedia, error)
+	uploadMedia(instanceID string, media *dataurl.DataURL, mediaType MediaType) (*whatsmeow.UploadResponse, error)
 }
 
 func NewWppService(
@@ -117,7 +166,7 @@ func (w *wppService) GetAuthenticatedInstance(instanceID string) (*configs.Insta
 	return instance, nil
 }
 
-func (w *wppService) SendTextMessage(instanceID string, jid types.JID, text string) (*SendMessageResponse, error) {
+func (w *wppService) SendTextMessage(instanceID string, jid types.JID, text string) (SendMessageResponse, error) {
 	message := &waProto.Message{
 		ExtendedTextMessage: &waProto.ExtendedTextMessage{
 			Text: &text,
@@ -127,10 +176,10 @@ func (w *wppService) SendTextMessage(instanceID string, jid types.JID, text stri
 	return w.SendMessage(instanceID, jid, message)
 }
 
-func (w *wppService) SendAudioMessage(instanceID string, jid types.JID, audioURL *dataurl.DataURL, mimitype string) (*SendMessageResponse, error) {
-	uploaded, err := w.UploadMedia(instanceID, audioURL, "audio")
+func (w *wppService) SendAudioMessage(instanceID string, jid types.JID, audioURL *dataurl.DataURL, mimitype string) (SendMessageResponse, error) {
+	uploaded, err := w.uploadMedia(instanceID, audioURL, Audio)
 	if err != nil {
-		return nil, err
+		return SendMessageResponse{}, err
 	}
 
 	message := &waProto.Message{
@@ -149,10 +198,10 @@ func (w *wppService) SendAudioMessage(instanceID string, jid types.JID, audioURL
 	return w.SendMessage(instanceID, jid, message)
 }
 
-func (w *wppService) SendImageMessage(instanceID string, jid types.JID, imageURL *dataurl.DataURL, mimitype string) (*SendMessageResponse, error) {
-	uploaded, err := w.UploadMedia(instanceID, imageURL, "image")
+func (w *wppService) SendImageMessage(instanceID string, jid types.JID, imageURL *dataurl.DataURL, mimitype string) (SendMessageResponse, error) {
+	uploaded, err := w.uploadMedia(instanceID, imageURL, Image)
 	if err != nil {
-		return nil, err
+		return SendMessageResponse{}, err
 	}
 
 	message := &waProto.Message{
@@ -170,37 +219,166 @@ func (w *wppService) SendImageMessage(instanceID string, jid types.JID, imageURL
 	return w.SendMessage(instanceID, jid, message)
 }
 
-func (w *wppService) SendMessage(instanceID string, jid types.JID, message *waProto.Message) (*SendMessageResponse, error) {
+func (w *wppService) SendMessage(instanceID string, jid types.JID, message *waProto.Message) (SendMessageResponse, error) {
 	instance, err := w.GetAuthenticatedInstance(instanceID)
 	if err != nil {
-		return nil, err
+		return SendMessageResponse{}, err
 	}
 
 	resp, err := instance.Client.SendMessage(context.Background(), jid, message)
 	if err != nil {
-		return nil, err
+		return SendMessageResponse{}, err
 	}
 
-	return &SendMessageResponse{
+	return SendMessageResponse{
 		ID:        resp.ID,
 		Sender:    *instance.Client.Store.ID,
 		Timestamp: resp.Timestamp,
 	}, nil
 }
 
-func (w *wppService) UploadMedia(instanceID string, media *dataurl.DataURL, type_ string) (*whatsmeow.UploadResponse, error) {
+func (w *wppService) ParseEventMessage(instance *configs.Instance, message *events.Message) (ParsedEventMessage, error) {
+	media, err := w.downloadMedia(
+		instance,
+		message.Message,
+	)
+
+	if err != nil && media == nil {
+		fmt.Println("================== aaaaaaaaa ==================", media.Type)
+		return ParsedEventMessage{}, err
+	}
+
+	text := w.getTextMessage(message.Message)
+	base := ParsedEventMessage{
+		InstanceID: instance.ID,
+		Body:       text,
+		MessageID:  message.Info.ID,
+		ChatJID:    message.Info.Chat.User,
+		SenderJID:  message.Info.Sender.User,
+		FromMe:     message.Info.MessageSource.IsFromMe,
+		Timestamp:  message.Info.Timestamp,
+	}
+
+	if media != nil && err == nil {
+		base.MediaType = &media.Type
+		base.Mimetype = &media.Mimetype
+		base.Media = &media.Data
+		return base, nil
+	}
+
+	return base, nil
+}
+
+func (w *wppService) uploadMedia(instanceID string, media *dataurl.DataURL, mediaType MediaType) (*whatsmeow.UploadResponse, error) {
 	instance, err := w.GetAuthenticatedInstance(instanceID)
 	if err != nil {
 		return nil, err
 	}
 
-	mediaType := whatsmeow.MediaAudio
-	if type_ == "image" {
-		mediaType = whatsmeow.MediaImage
+	var mType whatsmeow.MediaType
+	switch mediaType {
+	case Image:
+		mType = whatsmeow.MediaImage
+	case Audio:
+		mType = whatsmeow.MediaAudio
+	default:
+		return nil, errors.New("unknown media type")
 	}
 
-	uploaded, err := instance.Client.Upload(context.Background(), media.Data, mediaType)
+	uploaded, err := instance.Client.Upload(context.Background(), media.Data, mType)
+	if err != nil {
+		return nil, err
+	}
+
 	return &uploaded, nil
+}
+
+func (m *wppService) downloadMedia(instance *configs.Instance, message *waProto.Message) (*DownloadedMedia, error) {
+	dirPath := utils.MakeAccountStoragePath(instance.ID)
+	err := os.MkdirAll(dirPath, 0751)
+	if err != nil {
+		return nil, err
+	}
+
+	document := message.GetDocumentMessage()
+	if document != nil {
+		data, err := instance.Client.Download(document)
+		if err != nil {
+			return &DownloadedMedia{Type: Document}, err
+		}
+
+		return &DownloadedMedia{
+			Data:     data,
+			Type:     Document,
+			Mimetype: document.GetMimetype(),
+		}, nil
+	}
+
+	audio := message.GetAudioMessage()
+	if audio != nil {
+		data, err := instance.Client.Download(audio)
+		if err != nil {
+			return &DownloadedMedia{Type: Audio}, err
+		}
+
+		return &DownloadedMedia{
+			Data:     data,
+			Type:     Audio,
+			Mimetype: audio.GetMimetype(),
+		}, nil
+	}
+
+	image := message.GetImageMessage()
+	if image != nil {
+		data, err := instance.Client.Download(image)
+		if err != nil {
+			return &DownloadedMedia{Type: Image}, err
+		}
+
+		return &DownloadedMedia{
+			Data:     data,
+			Type:     Image,
+			Mimetype: image.GetMimetype(),
+		}, nil
+	}
+
+	sticker := message.GetStickerMessage()
+	if sticker != nil {
+		data, err := instance.Client.Download(sticker)
+		if err != nil {
+			return &DownloadedMedia{Type: Sticker}, err
+		}
+
+		return &DownloadedMedia{
+			Data:     data,
+			Type:     Sticker,
+			Mimetype: sticker.GetMimetype(),
+		}, nil
+	}
+
+	video := message.GetVideoMessage()
+	if video != nil {
+		data, err := instance.Client.Download(video)
+		if err != nil {
+			return &DownloadedMedia{Type: Video}, err
+		}
+
+		return &DownloadedMedia{
+			Data:     data,
+			Type:     Video,
+			Mimetype: video.GetMimetype(),
+		}, nil
+	}
+
+	return nil, nil
+}
+
+func (m *wppService) getTextMessage(message *waProto.Message) string {
+	extendedTextMessage := message.GetExtendedTextMessage()
+	if extendedTextMessage != nil {
+		return *extendedTextMessage.Text
+	}
+	return message.GetConversation()
 }
 
 func (w *wppService) destroyInstance(instanceID string) error {
@@ -432,20 +610,46 @@ func (w *wppService) handleLoggedOut(instanceID string) {
 
 func (w *wppService) handleMessage(instanceId string, evt *events.Message) {
 	instance := w.app.Instances[instanceId]
-	message := w.messageService.Parse(instance, evt)
+	parsedEventMessage, err := w.ParseEventMessage(instance, evt)
 
-	if message == nil {
+	if err != nil {
 		return
 	}
 
-	err := w.messageService.CreateMessage(message)
+	message := models.Message{
+		SenderJID:  parsedEventMessage.SenderJID,
+		ChatJID:    parsedEventMessage.ChatJID,
+		InstanceID: parsedEventMessage.InstanceID,
+		MessageID:  parsedEventMessage.MessageID,
+		Timestamp:  parsedEventMessage.Timestamp,
+		Body:       parsedEventMessage.Body,
+		FromMe:     parsedEventMessage.FromMe,
+	}
+
+	if parsedEventMessage.MediaType != nil {
+		path, err := utils.SaveMedia(
+			instance.ID,
+			parsedEventMessage.MessageID,
+			*parsedEventMessage.Media,
+			*parsedEventMessage.Mimetype,
+		)
+
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		message.MediaType = parsedEventMessage.MediaType.String()
+		message.MediaPath = path
+	}
+
+	err = w.messageService.CreateMessage(&message)
 	if err != nil {
 		fmt.Println(err)
 	}
 
 	body := map[string]interface{}{
 		"InstanceId": instanceId,
-		"Message":    w.messageService.ToJSON(*message),
+		"Message":    w.messageService.ToJSON(message),
 	}
 
 	err = utils.Request(w.app.Config.WebhookURL, body)
