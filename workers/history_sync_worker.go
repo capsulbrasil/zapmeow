@@ -152,8 +152,6 @@ func (q *historySyncWorker) ProcessQueue() {
 						message.MediaPath = path
 					}
 
-					fmt.Println(message)
-
 					if err != nil {
 						messages = append(messages, message)
 					}
