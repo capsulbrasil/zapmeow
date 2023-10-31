@@ -244,7 +244,6 @@ func (w *wppService) ParseEventMessage(instance *configs.Instance, message *even
 	)
 
 	if err != nil && media == nil {
-		fmt.Println("================== aaaaaaaaa ==================", media.Type)
 		return ParsedEventMessage{}, err
 	}
 
