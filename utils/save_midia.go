@@ -6,7 +6,7 @@ import (
 	"os"
 )
 
-func SaveMedia(instanceID string, data []byte, fileName string, mimetype string) (string, error) {
+func SaveMedia(instanceID string, fileName string, data []byte, mimetype string) (string, error) {
 	dirPath := MakeAccountStoragePath(instanceID)
 	err := os.MkdirAll(dirPath, 0751)
 	if err != nil {
