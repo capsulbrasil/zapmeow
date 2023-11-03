@@ -17,6 +17,7 @@ import (
 	waLog "go.mau.fi/whatsmeow/util/log"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 // @title ZapMeow API
@@ -45,7 +46,9 @@ func main() {
 		panic(err)
 	}
 
-	databaseClient, err := gorm.Open(sqlite.Open(config.DatabaseURL))
+	databaseClient, err := gorm.Open(sqlite.Open(config.DatabaseURL), &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Silent),
+	})
 	if err != nil {
 		panic("Failed to connect to database")
 	}
@@ -75,6 +78,7 @@ func main() {
 		panic(err)
 	}
 
+	var mutex sync.Mutex
 	var wg sync.WaitGroup
 	wg.Add(1)
 	stopCh := make(chan struct{})
@@ -87,6 +91,7 @@ func main() {
 		instances,
 		config,
 		&wg,
+		&mutex,
 		&stopCh,
 	)
 

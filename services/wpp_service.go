@@ -521,24 +521,31 @@ func (w *wppService) qrcode(instanceID string) {
 				case "success":
 					return
 				case "timeout":
-					// fmt.Println("[qrcode]: timeout error")
-					err := w.accountService.UpdateAccount(instanceID, map[string]interface{}{
-						"QrCode": "",
-						"Status": "TIMEOUT",
-					})
-					if err != nil {
-						fmt.Println("[qrcode]: ", err)
-					}
+					for {
+						w.app.Mutex.Lock()
+						err := w.accountService.UpdateAccount(instanceID, map[string]interface{}{
+							"QrCode": "",
+							"Status": "TIMEOUT",
+						})
+						w.app.Mutex.Unlock()
+						if err != nil {
+							fmt.Println("[qrcode]: ", err)
+						}
 
-					delete(w.app.Instances, instanceID)
+						delete(w.app.Instances, instanceID)
+					}
 				case "code":
-					w.accountService.UpdateAccount(instanceID, map[string]interface{}{
-						"QrCode":    evt.Code,
-						"Status":    "UNPAIRED",
-						"WasSynced": false,
-					})
-					if err != nil {
-						fmt.Println("[qrcode]: ", err)
+					for {
+						w.app.Mutex.Lock()
+						w.accountService.UpdateAccount(instanceID, map[string]interface{}{
+							"QrCode":    evt.Code,
+							"Status":    "UNPAIRED",
+							"WasSynced": false,
+						})
+						w.app.Mutex.Unlock()
+						if err != nil {
+							fmt.Println("[qrcode]: ", err)
+						}
 					}
 				}
 			}
