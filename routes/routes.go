@@ -28,6 +28,7 @@ func SetupRouter(
 	}
 
 	getQrCodeController := controllers.NewGetQrCodeController(
+		app,
 		wppService,
 		messageService,
 		accountService,
@@ -38,6 +39,7 @@ func SetupRouter(
 		accountService,
 	)
 	getStatusController := controllers.NewGetStatusController(
+		app,
 		wppService,
 		accountService,
 	)

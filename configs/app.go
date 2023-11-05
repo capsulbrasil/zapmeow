@@ -18,7 +18,7 @@ type ZapMeow struct {
 	WhatsmeowContainer *sqlstore.Container
 	DatabaseClient     *gorm.DB
 	RedisClient        *redis.Client
-	Instances          map[string]*Instance
+	Instances          *sync.Map
 	Config             ZapMeowConfig
 	Wg                 *sync.WaitGroup
 	Mutex              *sync.Mutex
@@ -29,7 +29,7 @@ func NewZapMeow(
 	whatsmeowContainer *sqlstore.Container,
 	databaseClient *gorm.DB,
 	redisClient *redis.Client,
-	instances map[string]*Instance,
+	instances *sync.Map,
 	config ZapMeowConfig,
 	wg *sync.WaitGroup,
 	mutex *sync.Mutex,
@@ -45,4 +45,20 @@ func NewZapMeow(
 		Mutex:              mutex,
 		StopCh:             stopCh,
 	}
+}
+
+func (a *ZapMeow) LoadInstance(instanceID string) *Instance {
+	value, _ := a.Instances.Load(instanceID)
+	if value != nil {
+		return value.(*Instance)
+	}
+	return nil
+}
+
+func (a *ZapMeow) StoreInstance(instanceID string, instance *Instance) {
+	a.Instances.Store(instanceID, instance)
+}
+
+func (a *ZapMeow) DeleteInstance(instanceID string) {
+	a.Instances.Delete(instanceID)
 }

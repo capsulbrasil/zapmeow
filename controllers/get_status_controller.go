@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"zapmeow/configs"
 	"zapmeow/services"
 	"zapmeow/utils"
 
@@ -8,6 +9,7 @@ import (
 )
 
 type getStatusController struct {
+	app            *configs.ZapMeow
 	wppService     services.WppService
 	accountService services.AccountService
 }
@@ -17,10 +19,12 @@ type getStatusResponse struct {
 }
 
 func NewGetStatusController(
+	app *configs.ZapMeow,
 	wppService services.WppService,
 	accountService services.AccountService,
 ) *getStatusController {
 	return &getStatusController{
+		app:            app,
 		wppService:     wppService,
 		accountService: accountService,
 	}
@@ -44,6 +48,8 @@ func (s *getStatusController) Handler(c *gin.Context) {
 		return
 	}
 
+	s.app.Mutex.Lock()
+	defer s.app.Mutex.Unlock()
 	account, err := s.accountService.GetAccountByInstanceID(instanceID)
 	if err != nil {
 		utils.RespondInternalServerError(c, err.Error())

@@ -37,7 +37,7 @@ func main() {
 	}
 
 	// whatsmeow instances
-	instances := make(map[string]*configs.Instance)
+	var instances sync.Map
 
 	// whatsmeow configs
 	dbLog := waLog.Stdout("Database", "DEBUG", true)
@@ -88,7 +88,7 @@ func main() {
 		whatsmeowContainer,
 		databaseClient,
 		redisClient,
-		instances,
+		&instances,
 		config,
 		&wg,
 		&mutex,

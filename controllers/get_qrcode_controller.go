@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"zapmeow/configs"
 	"zapmeow/services"
 	"zapmeow/utils"
 
@@ -8,6 +9,7 @@ import (
 )
 
 type getQrCodeController struct {
+	app            *configs.ZapMeow
 	wppService     services.WppService
 	messageService services.MessageService
 	accountService services.AccountService
@@ -18,11 +20,13 @@ type getQrCodeResponse struct {
 }
 
 func NewGetQrCodeController(
+	app *configs.ZapMeow,
 	wppService services.WppService,
 	messageService services.MessageService,
 	accountService services.AccountService,
 ) *getQrCodeController {
 	return &getQrCodeController{
+		app:            app,
 		wppService:     wppService,
 		messageService: messageService,
 		accountService: accountService,
@@ -46,6 +50,8 @@ func (q *getQrCodeController) Handler(c *gin.Context) {
 		return
 	}
 
+	q.app.Mutex.Lock()
+	defer q.app.Mutex.Unlock()
 	account, err := q.accountService.GetAccountByInstanceID(instanceID)
 	if err != nil {
 		utils.RespondInternalServerError(c, err.Error())

@@ -67,7 +67,7 @@ func (q *historySyncWorker) ProcessQueue() {
 				continue
 			}
 
-			instance := q.app.Instances[data.InstanceID]
+			instance := q.app.LoadInstance(data.InstanceID)
 			account, err := q.accountService.GetAccountByInstanceID(data.InstanceID)
 			if err != nil {
 				fmt.Println(err)
