@@ -1,7 +1,6 @@
 package services
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"zapmeow/models"
@@ -64,7 +63,6 @@ func (a *accountService) deleteAccountDirectory(instanceID string) error {
 			if err != nil {
 				return err
 			}
-			fmt.Printf("File removed: %s\n", path)
 		}
 		return nil
 	})

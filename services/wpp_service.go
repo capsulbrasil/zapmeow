@@ -511,7 +511,9 @@ func (w *wppService) qrcode(instanceID string) {
 		qrChan, err := instance.Client.GetQRChannel(context.Background())
 		if err != nil {
 			if !errors.Is(err, whatsmeow.ErrQRStoreContainsID) {
-				fmt.Println("failed to get qr channel")
+				if w.app.Config.Env != "production" {
+					fmt.Println("failed to get qr channel")
+				}
 			}
 		} else {
 			err = instance.Client.Connect()
