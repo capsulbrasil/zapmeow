@@ -7,8 +7,8 @@ ZapMeow is a versatile API that allows developers to interact with WhatsApp usin
 - **Multi-Instance Support**: Seamlessly manage and interact with multiple WhatsApp instances concurrently.
 - **Message Sending**: Send text, image, and audio messages to WhatsApp contacts and groups.
 - **Phone Number Verification**: Check if phone numbers are registered on WhatsApp.
-- **Contact Information**: Retrieve contact information, including names and emails.
-- **Profile Information**: Obtain profile information for WhatsApp users.
+- **Contact Information**: Obtain contact information.
+- **Profile Information**: Obtain profile information.
 - **QR Code Generation**: Generate QR codes to initiate WhatsApp login.
 - **Instance Status**: Retrieve the connection status of a specific instance of WhatsApp.
 
