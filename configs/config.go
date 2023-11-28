@@ -3,15 +3,15 @@ package configs
 import "os"
 
 type ZapMeowConfig struct {
-	Env           string
-	StoragePath   string
-	WebhookURL    string
-	DatabaseURL   string
-	RedisAddr     string
-	RedisPassword string
-	Port          string
-	QueueName     string
-	MessageLimit  int
+	Env                    string
+	StoragePath            string
+	WebhookURL             string
+	DatabaseURL            string
+	RedisAddr              string
+	RedisPassword          string
+	Port                   string
+	QueueName              string
+	MaxMessagesPerInstance int
 }
 
 func LoadConfigs() (ZapMeowConfig, error) {
@@ -24,14 +24,14 @@ func LoadConfigs() (ZapMeowConfig, error) {
 	port := os.Getenv("PORT")
 
 	return ZapMeowConfig{
-		Env:           env,
-		StoragePath:   storagePath,
-		WebhookURL:    webhookURL,
-		DatabaseURL:   databaseURL,
-		RedisAddr:     redisAddr,
-		RedisPassword: redisPassword,
-		Port:          port,
-		QueueName:     "HISTORY_SYNC_QUEUE",
-		MessageLimit:  10,
+		Env:                    env,
+		StoragePath:            storagePath,
+		WebhookURL:             webhookURL,
+		DatabaseURL:            databaseURL,
+		RedisAddr:              redisAddr,
+		RedisPassword:          redisPassword,
+		Port:                   port,
+		QueueName:              "HISTORY_SYNC_QUEUE",
+		MaxMessagesPerInstance: 10,
 	}, nil
 }
