@@ -2,11 +2,11 @@ package services
 
 import (
 	"encoding/base64"
-	"fmt"
 	"io/ioutil"
 	"mime"
 	"path/filepath"
 	"time"
+	"zapmeow/configs"
 	"zapmeow/models"
 	"zapmeow/repositories"
 )
@@ -37,11 +37,13 @@ type Message struct {
 
 type messageService struct {
 	messageRep repositories.MessageRepository
+	log        configs.Logger
 }
 
-func NewMessageService(messageRep repositories.MessageRepository) *messageService {
+func NewMessageService(messageRep repositories.MessageRepository, log configs.Logger) *messageService {
 	return &messageService{
 		messageRep: messageRep,
+		log:        log,
 	}
 }
 
@@ -80,7 +82,7 @@ func (m *messageService) ToJSON(message models.Message) Message {
 	if message.MediaType != "" {
 		data, err := ioutil.ReadFile(message.MediaPath)
 		if err != nil {
-			fmt.Println(err)
+			m.log.Error("Error reading the file. ", err)
 		} else {
 			mimetype := mime.TypeByExtension(filepath.Ext(message.MediaPath))
 			base64 := base64.StdEncoding.EncodeToString(data)

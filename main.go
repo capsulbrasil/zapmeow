@@ -1,14 +1,12 @@
 package main
 
 import (
-	"fmt"
 	"sync"
 	"zapmeow/configs"
 	"zapmeow/models"
 	"zapmeow/repositories"
 	"zapmeow/routes"
 	"zapmeow/services"
-	"zapmeow/utils"
 	"zapmeow/workers"
 
 	"github.com/go-redis/redis"
@@ -26,15 +24,13 @@ import (
 // @host localhost:8900
 // @BasePath /api
 func main() {
+	log := configs.NewLogger()
+
 	err := godotenv.Load()
 	if err != nil {
-		panic("failed load .env")
+		log.Fatal("Error loading dotfile. ", err)
 	}
-
-	config, err := configs.LoadConfigs()
-	if err != nil {
-		panic("failed get .env")
-	}
+	config := configs.LoadConfigs()
 
 	// whatsmeow instances
 	var instances sync.Map
@@ -43,19 +39,19 @@ func main() {
 	dbLog := waLog.Stdout("Database", "DEBUG", true)
 	whatsmeowContainer, err := sqlstore.New("sqlite3", "file:"+config.DatabaseURL+"?_foreign_keys=on", dbLog)
 	if err != nil {
-		panic(err)
+		log.Fatal("Error loading sqlite whatsmeow container. ", err)
 	}
 
 	databaseClient, err := gorm.Open(sqlite.Open(config.DatabaseURL), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Silent),
 	})
 	if err != nil {
-		panic("Failed to connect to database")
+		log.Fatal("Error creating gorm database. ", err)
 	}
 
 	db, err := databaseClient.DB()
 	if err != nil {
-		panic("Failed to get database connection")
+		log.Fatal("Error getting gorm database. ", err)
 	}
 	defer db.Close()
 
@@ -64,7 +60,7 @@ func main() {
 		&models.Message{},
 	)
 	if err != nil {
-		panic(err)
+		log.Fatal("Error when running gorm automigrate. ", err)
 	}
 
 	// redis configs
@@ -74,8 +70,8 @@ func main() {
 		DB:       0,
 	})
 
-	if err := utils.Ping(redisClient); err != nil {
-		panic(err)
+	if _, err := redisClient.Ping().Result(); err != nil {
+		log.Fatal("Error when pinging redis. ", err)
 	}
 
 	var mutex sync.Mutex
@@ -100,12 +96,13 @@ func main() {
 	accountRepo := repositories.NewAccountRepository(app.DatabaseClient)
 
 	// services
-	messageService := services.NewMessageService(messageRepo)
+	messageService := services.NewMessageService(messageRepo, log)
 	accountService := services.NewAccountService(accountRepo, messageService)
 	wppService := services.NewWppService(
 		app,
 		messageService,
 		accountService,
+		log,
 	)
 
 	// workers
@@ -114,6 +111,7 @@ func main() {
 		messageService,
 		accountService,
 		wppService,
+		log,
 	)
 
 	r := routes.SetupRouter(
@@ -123,23 +121,23 @@ func main() {
 		accountService,
 	)
 
+	log.Info("Loading whatsapp instances")
 	accounts, err := accountService.GetConnectedAccounts()
-	fmt.Println("loading instances...")
 	if err != nil {
-		fmt.Println("[accounts]: ", err)
+		log.Fatal("Error getting accounts. ", err)
 	}
 
 	for _, account := range accounts {
-		fmt.Println("[instance]: ", account.InstanceID)
+		log.Info("Loading instance: ", account.InstanceID)
 		_, err := wppService.GetInstance(account.InstanceID)
 		if err != nil {
-			fmt.Println("[instance]: ", err)
+			log.Error("Error getting instance. ", err)
 		}
 	}
 
 	go func() {
 		if err := r.Run(config.Port); err != nil {
-			fmt.Println(err)
+			log.Fatal(err)
 		}
 	}()
 

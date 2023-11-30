@@ -3,7 +3,6 @@ package services
 import (
 	"context"
 	"errors"
-	"fmt"
 	"os"
 	"time"
 	"zapmeow/configs"
@@ -25,6 +24,7 @@ type wppService struct {
 	app            *configs.ZapMeow
 	messageService MessageService
 	accountService AccountService
+	log            configs.Logger
 }
 
 type ContactInfo struct {
@@ -105,11 +105,13 @@ func NewWppService(
 	app *configs.ZapMeow,
 	messageService MessageService,
 	accountService AccountService,
+	log configs.Logger,
 ) *wppService {
 	return &wppService{
 		app:            app,
 		messageService: messageService,
 		accountService: accountService,
+		log:            log,
 	}
 }
 
@@ -126,8 +128,9 @@ func (w *wppService) GetInstance(instanceID string) (*configs.Instance, error) {
 	}
 
 	w.app.StoreInstance(instanceID, &configs.Instance{
-		ID:     instanceID,
-		Client: client,
+		ID:              instanceID,
+		Client:          client,
+		QrCodeRateLimit: 10,
 	})
 
 	instance = w.app.LoadInstance(instanceID)
@@ -159,11 +162,11 @@ func (w *wppService) GetAuthenticatedInstance(instanceID string) (*configs.Insta
 	}
 
 	if !instance.Client.IsConnected() {
-		return nil, errors.New("instance not connected")
+		return nil, errors.New("unconnected instance")
 	}
 
 	if !instance.Client.IsLoggedIn() {
-		return nil, errors.New("inauthenticated instance")
+		return nil, errors.New("unauthenticated instance")
 	}
 
 	return instance, nil
@@ -175,7 +178,6 @@ func (w *wppService) SendTextMessage(instanceID string, jid types.JID, text stri
 			Text: &text,
 		},
 	}
-
 	return w.SendMessage(instanceID, jid, message)
 }
 
@@ -184,7 +186,6 @@ func (w *wppService) SendAudioMessage(instanceID string, jid types.JID, audioURL
 	if err != nil {
 		return SendMessageResponse{}, err
 	}
-
 	message := &waProto.Message{
 		AudioMessage: &waProto.AudioMessage{
 			Ptt:           proto.Bool(true),
@@ -197,7 +198,6 @@ func (w *wppService) SendAudioMessage(instanceID string, jid types.JID, audioURL
 			FileLength:    proto.Uint64(uint64(len(audioURL.Data))),
 		},
 	}
-
 	return w.SendMessage(instanceID, jid, message)
 }
 
@@ -206,7 +206,6 @@ func (w *wppService) SendImageMessage(instanceID string, jid types.JID, imageURL
 	if err != nil {
 		return SendMessageResponse{}, err
 	}
-
 	message := &waProto.Message{
 		ImageMessage: &waProto.ImageMessage{
 			Url:           proto.String(uploaded.URL),
@@ -218,7 +217,6 @@ func (w *wppService) SendImageMessage(instanceID string, jid types.JID, imageURL
 			FileLength:    proto.Uint64(uint64(len(imageURL.Data))),
 		},
 	}
-
 	return w.SendMessage(instanceID, jid, message)
 }
 
@@ -511,45 +509,49 @@ func (w *wppService) qrcode(instanceID string) {
 		qrChan, err := instance.Client.GetQRChannel(context.Background())
 		if err != nil {
 			if !errors.Is(err, whatsmeow.ErrQRStoreContainsID) {
-				if w.app.Config.Env != "production" {
-					fmt.Println("failed to get qr channel")
-				}
+				w.log.Error("Failed to get qr channel. ", err)
 			}
 		} else {
 			err = instance.Client.Connect()
 			if err != nil {
-				fmt.Println("[qrcode]: ", err)
+				w.log.Error("Failed to connect client to WhatsApp websocket. ", err)
 				return
 			}
+
 			for evt := range qrChan {
+				if instance.QrCodeRateLimit == 0 {
+					err := w.destroyInstance(instanceID)
+					if err != nil {
+						w.log.Error("Failed to destroy instance. ", err)
+					}
+					return
+				}
+
 				switch evt.Event {
 				case "success":
 					return
 				case "timeout":
 					{
-						// w.app.Mutex.Lock()
-						// defer w.app.Mutex.Unlock()
 						err := w.accountService.UpdateAccount(instanceID, map[string]interface{}{
 							"QrCode": "",
 							"Status": "TIMEOUT",
 						})
 						if err != nil {
-							fmt.Println("[qrcode]: ", err)
+							w.log.Error("Failed to update account. ", err)
 						}
 
 						w.app.DeleteInstance(instanceID)
 					}
 				case "code":
 					{
-						// w.app.Mutex.Lock()
-						// defer w.app.Mutex.Unlock()
-						w.accountService.UpdateAccount(instanceID, map[string]interface{}{
+						instance.QrCodeRateLimit -= 1
+						err = w.accountService.UpdateAccount(instanceID, map[string]interface{}{
 							"QrCode":    evt.Code,
 							"Status":    "UNPAIRED",
 							"WasSynced": false,
 						})
 						if err != nil {
-							fmt.Println("[qrcode]: ", err)
+							w.log.Error("Failed to update account. ", err)
 						}
 					}
 				}
@@ -574,14 +576,14 @@ func (w *wppService) eventHandler(instanceID string, rawEvt interface{}) {
 func (w *wppService) handleHistorySync(instanceID string, evt *events.HistorySync) {
 	history, _ := proto.Marshal(evt.Data)
 
-	queue := queues.NewHistorySyncQueue(w.app)
+	queue := queues.NewHistorySyncQueue(w.app, w.log)
 	err := queue.Enqueue(queues.HistorySyncQueueData{
 		History:    history,
 		InstanceID: instanceID,
 	})
 
 	if err != nil {
-		fmt.Println("Error adding item to queue: ", err)
+		w.log.Error("Failed to add history sync to queue. ", err)
 	}
 }
 
@@ -600,22 +602,21 @@ func (w *wppService) handleConnected(instanceID string) {
 	})
 
 	if err != nil {
-		fmt.Println("Error creating account:", err)
-		return
+		w.log.Error("Failed to update account. ", err)
 	}
 }
 
 func (w *wppService) handleLoggedOut(instanceID string) {
 	err := w.destroyInstance(instanceID)
 	if err != nil {
-		fmt.Println("Error", err)
+		w.log.Error(err)
 	}
 
 	err = w.accountService.UpdateAccount(instanceID, map[string]interface{}{
 		"Status": "UNPAIRED",
 	})
 	if err != nil {
-		fmt.Println("Error", err)
+		w.log.Error("Failed to update account. ", err)
 	}
 }
 
@@ -624,6 +625,7 @@ func (w *wppService) handleMessage(instanceId string, evt *events.Message) {
 	parsedEventMessage, err := w.ParseEventMessage(instance, evt)
 
 	if err != nil {
+		w.log.Error(err)
 		return
 	}
 
@@ -646,7 +648,7 @@ func (w *wppService) handleMessage(instanceId string, evt *events.Message) {
 		)
 
 		if err != nil {
-			fmt.Println(err)
+			w.log.Error("Failed to save media. ", err)
 		}
 
 		message.MediaType = parsedEventMessage.MediaType.String()
@@ -655,7 +657,8 @@ func (w *wppService) handleMessage(instanceId string, evt *events.Message) {
 
 	err = w.messageService.CreateMessage(&message)
 	if err != nil {
-		fmt.Println(err)
+		w.log.Error("Failed to create message. ", err)
+		return
 	}
 
 	body := map[string]interface{}{
@@ -664,9 +667,8 @@ func (w *wppService) handleMessage(instanceId string, evt *events.Message) {
 	}
 
 	err = utils.Request(w.app.Config.WebhookURL, body)
-
 	if err != nil {
-		fmt.Println("Error when send request:", err)
+		w.log.Error("Failed to send webhook request. ", err)
 	}
 }
 

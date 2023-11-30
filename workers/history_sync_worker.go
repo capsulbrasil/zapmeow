@@ -1,7 +1,6 @@
 package workers
 
 import (
-	"fmt"
 	"sort"
 	"time"
 	"zapmeow/configs"
@@ -21,6 +20,7 @@ type historySyncWorker struct {
 	messageService services.MessageService
 	accountService services.AccountService
 	wppService     services.WppService
+	log            configs.Logger
 }
 
 type HistorySyncWorker interface {
@@ -32,17 +32,19 @@ func NewHistorySyncWorker(
 	messageService services.MessageService,
 	accountService services.AccountService,
 	wppService services.WppService,
+	log configs.Logger,
 ) *historySyncWorker {
 	return &historySyncWorker{
 		messageService: messageService,
 		accountService: accountService,
 		wppService:     wppService,
 		app:            app,
+		log:            log,
 	}
 }
 
 func (q *historySyncWorker) ProcessQueue() {
-	queue := queues.NewHistorySyncQueue(q.app)
+	queue := queues.NewHistorySyncQueue(q.app, q.log)
 
 	defer q.app.Wg.Done()
 	for {
@@ -51,7 +53,7 @@ func (q *historySyncWorker) ProcessQueue() {
 			return
 		default:
 			if err := q.processHistorySync(queue); err != nil {
-				fmt.Println("[history sync]:", err)
+				q.log.Error("Error processing history sync. ", err)
 			}
 		}
 

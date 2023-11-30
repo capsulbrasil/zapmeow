@@ -45,7 +45,7 @@ func NewSendTextMessageController(
 func (t *sendTextMessageController) Handler(c *gin.Context) {
 	var body textMessageBody
 	if err := c.ShouldBindJSON(&body); err != nil {
-		utils.RespondBadRequest(c, "Body data is invalid")
+		utils.RespondBadRequest(c, "error trying to validate infos")
 		return
 	}
 

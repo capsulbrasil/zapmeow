@@ -46,7 +46,7 @@ func NewSendImageMessageController(
 func (i *sendImageMessageController) Handler(c *gin.Context) {
 	var body imageMessageBody
 	if err := c.ShouldBindJSON(&body); err != nil {
-		utils.RespondBadRequest(c, "Body data is invalid")
+		utils.RespondBadRequest(c, "error trying to validate infos")
 		return
 	}
 

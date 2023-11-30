@@ -1,19 +1,19 @@
 package utils
 
 import (
-	"fmt"
+	"errors"
 	"strings"
 )
 
 func GetMimeTypeFromDataURI(dataURI string) (string, error) {
 	components := strings.Split(dataURI, ",")
 	if len(components) < 2 {
-		return "", fmt.Errorf("Invalid Data URI")
+		return "", errors.New("invalid data uri")
 	}
 
 	mimeTypeComponents := strings.Split(components[0], ";")
 	if len(mimeTypeComponents) < 2 {
-		return "", fmt.Errorf("Invalid Data URI: MIME type not found")
+		return "", errors.New("mime type not found")
 	}
 
 	mimeType := strings.TrimPrefix(mimeTypeComponents[0], "data:")

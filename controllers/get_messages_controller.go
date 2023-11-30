@@ -42,7 +42,7 @@ func (m *getMessagesController) Handler(c *gin.Context) {
 
 	var body Body
 	if err := c.ShouldBindJSON(&body); err != nil {
-		utils.RespondBadRequest(c, "Body data is invalid")
+		utils.RespondBadRequest(c, "error trying to validate infos")
 		return
 	}
 	instanceID := c.Param("instanceId")

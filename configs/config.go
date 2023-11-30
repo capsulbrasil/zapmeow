@@ -14,7 +14,7 @@ type ZapMeowConfig struct {
 	MaxMessagesPerInstance int
 }
 
-func LoadConfigs() (ZapMeowConfig, error) {
+func LoadConfigs() ZapMeowConfig {
 	env := os.Getenv("ENV")
 	storagePath := os.Getenv("STORAGE_PATH")
 	webhookURL := os.Getenv("WEBHOOK_URL")
@@ -33,5 +33,5 @@ func LoadConfigs() (ZapMeowConfig, error) {
 		Port:                   port,
 		QueueName:              "HISTORY_SYNC_QUEUE",
 		MaxMessagesPerInstance: 10,
-	}, nil
+	}
 }

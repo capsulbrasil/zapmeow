@@ -2,7 +2,6 @@ package queues
 
 import (
 	"encoding/json"
-	"fmt"
 	"zapmeow/configs"
 
 	"github.com/go-redis/redis"
@@ -16,6 +15,7 @@ type HistorySyncQueueData struct {
 type historySyncQueue struct {
 	client *redis.Client
 	app    *configs.ZapMeow
+	log    configs.Logger
 }
 
 type HistorySyncQueue interface {
@@ -23,15 +23,17 @@ type HistorySyncQueue interface {
 	Dequeue() (*HistorySyncQueueData, error)
 }
 
-func NewHistorySyncQueue(app *configs.ZapMeow) *historySyncQueue {
+func NewHistorySyncQueue(app *configs.ZapMeow, log configs.Logger) *historySyncQueue {
 	return &historySyncQueue{
 		app: app,
+		log: log,
 	}
 }
 
 func (q *historySyncQueue) Enqueue(item HistorySyncQueueData) error {
 	jsonData, err := json.Marshal(item)
 	if err != nil {
+		q.log.Error("Error marshal history sync", err)
 		return err
 	}
 
@@ -44,7 +46,7 @@ func (q *historySyncQueue) Dequeue() (*HistorySyncQueueData, error) {
 		if err == redis.Nil {
 			return nil, nil
 		} else {
-			fmt.Printf("Error dequeuing item: %s", err)
+			q.log.Error("Error dequeuing history sync", err)
 			return nil, err
 		}
 	}
@@ -53,7 +55,7 @@ func (q *historySyncQueue) Dequeue() (*HistorySyncQueueData, error) {
 	err = json.Unmarshal(result, &data)
 
 	if err != nil {
-		fmt.Printf("Error unmarshal item: %s", err)
+		q.log.Error("Error unmarshal history sync.", err)
 		return nil, err
 	}
 

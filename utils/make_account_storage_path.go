@@ -2,9 +2,10 @@ package utils
 
 import (
 	"fmt"
-	"os"
+	"zapmeow/configs"
 )
 
 func MakeAccountStoragePath(instanceID string) string {
-	return fmt.Sprintf("%s/instance_%s", os.Getenv("STORAGE_PATH"), instanceID)
+	config := configs.LoadConfigs()
+	return fmt.Sprintf("%s/instance_%s", config.StoragePath, instanceID)
 }

@@ -52,7 +52,7 @@ func NewCheckPhonesController(
 func (p *checkPhonesController) Handler(c *gin.Context) {
 	var body phoneCheckBody
 	if err := c.ShouldBindJSON(&body); err != nil {
-		utils.RespondBadRequest(c, "Body data is invalid")
+		utils.RespondBadRequest(c, "Error trying to validate infos. ")
 		return
 	}
 	instanceID := c.Param("instanceId")

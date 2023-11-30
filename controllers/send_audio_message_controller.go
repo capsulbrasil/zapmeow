@@ -46,7 +46,7 @@ func NewSendAudioMessageController(
 func (a *sendAudioMessageController) Handler(c *gin.Context) {
 	var body audioMessageBody
 	if err := c.ShouldBindJSON(&body); err != nil {
-		utils.RespondBadRequest(c, "Body data is invalid")
+		utils.RespondBadRequest(c, "error trying to validate infos")
 		return
 	}
 
