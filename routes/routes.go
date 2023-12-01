@@ -21,7 +21,7 @@ func SetupRouter(
 	docs.SwaggerInfo.BasePath = "/api"
 
 	var router *gin.Engine
-	if app.Config.Env == "production" {
+	if app.Config.Environment == configs.Development {
 		router = gin.New()
 	} else {
 		router = gin.Default()

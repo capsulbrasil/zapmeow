@@ -673,7 +673,7 @@ func (w *wppService) handleMessage(instanceId string, evt *events.Message) {
 }
 
 func createClient(config configs.ZapMeowConfig, deviceStore *store.Device) *whatsmeow.Client {
-	if config.Env == "production" {
+	if config.Environment == configs.Production {
 		return whatsmeow.NewClient(deviceStore, nil)
 	}
 	log := waLog.Stdout("Client", "DEBUG", true)

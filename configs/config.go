@@ -2,8 +2,15 @@ package configs
 
 import "os"
 
+type Environment = uint
+
+const (
+	Development Environment = iota
+	Production
+)
+
 type ZapMeowConfig struct {
-	Env                    string
+	Environment            Environment
 	StoragePath            string
 	WebhookURL             string
 	DatabaseURL            string
@@ -15,16 +22,16 @@ type ZapMeowConfig struct {
 }
 
 func LoadConfigs() ZapMeowConfig {
-	env := os.Getenv("ENV")
 	storagePath := os.Getenv("STORAGE_PATH")
 	webhookURL := os.Getenv("WEBHOOK_URL")
 	databaseURL := os.Getenv("DATABASE_PATH")
 	redisAddr := os.Getenv("REDIS_ADDR")
 	redisPassword := os.Getenv("REDIS_PASSWORD")
 	port := os.Getenv("PORT")
+	env := getEnvironment()
 
 	return ZapMeowConfig{
-		Env:                    env,
+		Environment:            env,
 		StoragePath:            storagePath,
 		WebhookURL:             webhookURL,
 		DatabaseURL:            databaseURL,
@@ -34,4 +41,12 @@ func LoadConfigs() ZapMeowConfig {
 		QueueName:              "HISTORY_SYNC_QUEUE",
 		MaxMessagesPerInstance: 10,
 	}
+}
+
+func getEnvironment() Environment {
+	env := os.Getenv("ENVIRONMENT")
+	if env == "production" {
+		return Production
+	}
+	return Development
 }
