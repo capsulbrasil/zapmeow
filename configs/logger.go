@@ -24,7 +24,10 @@ type logger struct {
 
 func NewLogger() *logger {
 	log := logrus.New()
-	log.SetFormatter(&logrus.TextFormatter{})
+	log.SetFormatter(&logrus.TextFormatter{
+		DisableColors: true,
+		FullTimestamp: true,
+	})
 	log.SetOutput(os.Stdout)
 	return &logger{
 		log: log,
