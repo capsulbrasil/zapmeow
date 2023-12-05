@@ -69,7 +69,7 @@ func (a *sendAudioMessageController) Handler(c *gin.Context) {
 		return
 	}
 
-	resp, err := a.wppService.SendImageMessage(instanceID, jid, audioURL, mimitype)
+	resp, err := a.wppService.SendAudioMessage(instanceID, jid, audioURL, mimitype)
 	if err != nil {
 		utils.RespondInternalServerError(c, err.Error())
 		return
