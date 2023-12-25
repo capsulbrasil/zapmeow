@@ -11,8 +11,8 @@ RUN ls -la
 RUN go mod download
 
 ENV CGO_ENABLED=1
-RUN go build -o main .
+RUN go build -o server cmd/server/main.go
 
 EXPOSE 8900
 
-CMD ["./main"]
+CMD ["./server"]
