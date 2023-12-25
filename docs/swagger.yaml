@@ -1,103 +1,111 @@
 basePath: /api
 definitions:
-  controllers.audioMessageBody:
-    properties:
-      base64:
-        type: string
-      phone:
-        type: string
-    type: object
-  controllers.checkPhonesResponse:
-    properties:
-      phones:
-        items:
-          $ref: '#/definitions/controllers.phone'
-        type: array
-    type: object
-  controllers.contactInfoResponse:
+  handler.contactInfoResponse:
     properties:
       info:
-        $ref: '#/definitions/services.ContactInfo'
+        $ref: '#/definitions/whatsapp.ContactInfo'
     type: object
-  controllers.getMessagesResponse:
-    properties:
-      messages:
-        items:
-          $ref: '#/definitions/services.Message'
-        type: array
-    type: object
-  controllers.getProfileInfoResponse:
-    properties:
-      info:
-        $ref: '#/definitions/services.ContactInfo'
-    type: object
-  controllers.getQrCodeResponse:
-    properties:
-      qrCode:
-        type: string
-    type: object
-  controllers.getStatusResponse:
-    properties:
-      status:
-        type: string
-    type: object
-  controllers.imageMessageBody:
-    properties:
-      base64:
-        type: string
-      phone:
-        type: string
-    type: object
-  controllers.phone:
-    properties:
-      isRegistered:
-        type: boolean
-      jid:
-        properties:
-          ad:
-            type: boolean
-          agent:
-            type: integer
-          device:
-            type: integer
-          server:
-            type: string
-          user:
-            type: string
-        type: object
-      query:
-        type: string
-    type: object
-  controllers.phoneCheckBody:
+  handler.getCheckPhonesBody:
     properties:
       phones:
         items:
           type: string
         type: array
     type: object
-  controllers.sendAudioMessageResponse:
+  handler.getCheckPhonesResponse:
+    properties:
+      phones:
+        items:
+          $ref: '#/definitions/whatsapp.IsOnWhatsAppResponse'
+        type: array
+    type: object
+  handler.getMessagesBody:
+    properties:
+      phone:
+        type: string
+    type: object
+  handler.getMessagesResponse:
+    properties:
+      messages:
+        items:
+          $ref: '#/definitions/response.Message'
+        type: array
+    type: object
+  handler.getProfileInfoResponse:
+    properties:
+      info:
+        $ref: '#/definitions/whatsapp.ContactInfo'
+    type: object
+  handler.getQrCodeResponse:
+    properties:
+      qrcode:
+        type: string
+    type: object
+  handler.getStatusResponse:
+    properties:
+      status:
+        type: string
+    type: object
+  handler.sendAudioMessageBody:
+    properties:
+      base64:
+        type: string
+      phone:
+        type: string
+    type: object
+  handler.sendAudioMessageResponse:
     properties:
       message:
-        $ref: '#/definitions/services.Message'
+        $ref: '#/definitions/response.Message'
     type: object
-  controllers.sendImageMessageResponse:
+  handler.sendImageMessageBody:
+    properties:
+      base64:
+        type: string
+      phone:
+        type: string
+    type: object
+  handler.sendImageMessageResponse:
     properties:
       message:
-        $ref: '#/definitions/services.Message'
+        $ref: '#/definitions/response.Message'
     type: object
-  controllers.sendTextMessageResponse:
-    properties:
-      message:
-        $ref: '#/definitions/services.Message'
-    type: object
-  controllers.textMessageBody:
+  handler.sendTextMessageBody:
     properties:
       phone:
         type: string
       text:
         type: string
     type: object
-  services.ContactInfo:
+  handler.sendTextMessageResponse:
+    properties:
+      message:
+        $ref: '#/definitions/response.Message'
+    type: object
+  response.Message:
+    properties:
+      body:
+        type: string
+      chat:
+        type: string
+      from_me:
+        type: boolean
+      id:
+        type: integer
+      media_base64:
+        type: string
+      media_mimetype:
+        type: string
+      media_type:
+        type: string
+      message_id:
+        type: string
+      sender:
+        type: string
+      timestamp:
+        type: string
+    type: object
+  whatsapp.ContactInfo:
     properties:
       name:
         type: string
@@ -108,30 +116,13 @@ definitions:
       status:
         type: string
     type: object
-  services.Message:
+  whatsapp.IsOnWhatsAppResponse:
     properties:
-      body:
-        type: string
-      chat:
-        type: string
-      fromMe:
+      is_registered:
         type: boolean
-      id:
-        type: integer
-      mediaData:
-        properties:
-          base64:
-            type: string
-          mimetype:
-            type: string
-        type: object
-      mediaType:
+      phone:
         type: string
-      messageID:
-        type: string
-      sender:
-        type: string
-      timestamp:
+      query:
         type: string
     type: object
 host: localhost:8900
@@ -152,13 +143,19 @@ paths:
         name: instanceId
         required: true
         type: string
+      - description: Phone
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/handler.getMessagesBody'
       produces:
       - application/json
       responses:
         "200":
           description: List of chat messages
           schema:
-            $ref: '#/definitions/controllers.getMessagesResponse'
+            $ref: '#/definitions/handler.getMessagesResponse'
       summary: Get WhatsApp Chat Messages
       tags:
       - WhatsApp Chat
@@ -178,14 +175,14 @@ paths:
         name: data
         required: true
         schema:
-          $ref: '#/definitions/controllers.audioMessageBody'
+          $ref: '#/definitions/handler.sendAudioMessageBody'
       produces:
       - application/json
       responses:
         "200":
           description: Message Send Response
           schema:
-            $ref: '#/definitions/controllers.sendAudioMessageResponse'
+            $ref: '#/definitions/handler.sendAudioMessageResponse'
       summary: Send Audio Message on WhatsApp
       tags:
       - WhatsApp Chat
@@ -205,14 +202,14 @@ paths:
         name: data
         required: true
         schema:
-          $ref: '#/definitions/controllers.imageMessageBody'
+          $ref: '#/definitions/handler.sendImageMessageBody'
       produces:
       - application/json
       responses:
         "200":
           description: Message Send Response
           schema:
-            $ref: '#/definitions/controllers.sendImageMessageResponse'
+            $ref: '#/definitions/handler.sendImageMessageResponse'
       summary: Send Image Message on WhatsApp
       tags:
       - WhatsApp Chat
@@ -232,14 +229,14 @@ paths:
         name: data
         required: true
         schema:
-          $ref: '#/definitions/controllers.textMessageBody'
+          $ref: '#/definitions/handler.sendTextMessageBody'
       produces:
       - application/json
       responses:
         "200":
           description: Message Send Response
           schema:
-            $ref: '#/definitions/controllers.sendTextMessageResponse'
+            $ref: '#/definitions/handler.sendTextMessageResponse'
       summary: Send Text Message on WhatsApp
       tags:
       - WhatsApp Chat
@@ -260,14 +257,14 @@ paths:
         name: data
         required: true
         schema:
-          $ref: '#/definitions/controllers.phoneCheckBody'
+          $ref: '#/definitions/handler.getCheckPhonesBody'
       produces:
       - application/json
       responses:
         "200":
           description: List of verified numbers
           schema:
-            $ref: '#/definitions/controllers.checkPhonesResponse'
+            $ref: '#/definitions/handler.getCheckPhonesResponse'
       summary: Check Phones on WhatsApp
       tags:
       - WhatsApp Phone Verification
@@ -293,7 +290,7 @@ paths:
         "200":
           description: Contact Information
           schema:
-            $ref: '#/definitions/controllers.contactInfoResponse'
+            $ref: '#/definitions/handler.contactInfoResponse'
       summary: Get Contact Information
       tags:
       - WhatsApp Contact
@@ -336,7 +333,7 @@ paths:
         "200":
           description: Profile Information
           schema:
-            $ref: '#/definitions/controllers.getProfileInfoResponse'
+            $ref: '#/definitions/handler.getProfileInfoResponse'
       summary: Get Profile Information
       tags:
       - WhatsApp Profile
@@ -353,9 +350,9 @@ paths:
       - application/json
       responses:
         "200":
-          description: QR code
+          description: QR Code
           schema:
-            $ref: '#/definitions/controllers.getQrCodeResponse'
+            $ref: '#/definitions/handler.getQrCodeResponse'
       summary: Get WhatsApp QR Code
       tags:
       - WhatsApp Login
@@ -376,7 +373,7 @@ paths:
         "200":
           description: Status Response
           schema:
-            $ref: '#/definitions/controllers.getStatusResponse'
+            $ref: '#/definitions/handler.getStatusResponse'
       summary: Get WhatsApp Instance Status
       tags:
       - WhatsApp Status
