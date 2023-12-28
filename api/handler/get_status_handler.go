@@ -32,14 +32,15 @@ func NewGetStatusHandler(
 }
 
 // Get WhatsApp Instance Status
-// @Summary Get WhatsApp Instance Status
-// @Description Returns the status of the specified WhatsApp instance.
-// @Tags WhatsApp Status
-// @Param instanceId path string true "Instance ID"
-// @Accept json
-// @Produce json
-// @Success 200 {object} getStatusResponse "Status Response"
-// @Router /{instanceId}/status [get]
+//
+//	@Summary		Get WhatsApp Instance Status
+//	@Description	Returns the status of the specified WhatsApp instance.
+//	@Tags			WhatsApp Status
+//	@Param			instanceId	path	string	true	"Instance ID"
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{object}	getStatusResponse	"Status Response"
+//	@Router			/{instanceId}/status [get]
 func (h *getStatusHandler) Handler(c *gin.Context) {
 	instanceID := c.Param("instanceId")
 	instance, err := h.whatsAppService.GetInstance(instanceID)

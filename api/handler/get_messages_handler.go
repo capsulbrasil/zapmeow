@@ -32,15 +32,16 @@ func NewGetMessagesHandler(
 }
 
 // Get WhatsApp Chat Messages
-// @Summary Get WhatsApp Chat Messages
-// @Description Returns chat messages from the specified WhatsApp instance.
-// @Tags WhatsApp Chat
-// @Param instanceId path string true "Instance ID"
-// @Param data body getMessagesBody true "Phone"
-// @Accept json
-// @Produce json
-// @Success 200 {object} getMessagesResponse "List of chat messages"
-// @Router /{instanceId}/chat/messages [post]
+//
+//	@Summary		Get WhatsApp Chat Messages
+//	@Description	Returns chat messages from the specified WhatsApp instance.
+//	@Tags			WhatsApp Chat
+//	@Param			instanceId	path	string			true	"Instance ID"
+//	@Param			data		body	getMessagesBody	true	"Phone"
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{object}	getMessagesResponse	"List of chat messages"
+//	@Router			/{instanceId}/chat/messages [post]
 func (h *getMessagesHandler) Handler(c *gin.Context) {
 	instanceID := c.Param("instanceId")
 	instance, err := h.whatsAppService.GetInstance(instanceID)

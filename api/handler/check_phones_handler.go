@@ -30,15 +30,16 @@ func NewCheckPhonesHandler(
 }
 
 // Check Phones on WhatsApp
-// @Summary Check Phones on WhatsApp
-// @Description Verifies if the phone numbers in the provided list are registered WhatsApp users.
-// @Tags WhatsApp Phone Verification
-// @Param instanceId path string true "Instance ID"
-// @Param data body getCheckPhonesBody true "Phone list"
-// @Accept json
-// @Produce json
-// @Success 200 {object} getCheckPhonesResponse "List of verified numbers"
-// @Router /{instanceId}/check/phones [post]
+//
+//	@Summary		Check Phones on WhatsApp
+//	@Description	Verifies if the phone numbers in the provided list are registered WhatsApp users.
+//	@Tags			WhatsApp Phone Verification
+//	@Param			instanceId	path	string				true	"Instance ID"
+//	@Param			data		body	getCheckPhonesBody	true	"Phone list"
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{object}	getCheckPhonesResponse	"List of verified numbers"
+//	@Router			/{instanceId}/check/phones [post]
 func (h *checkPhonesHandler) Handler(c *gin.Context) {
 	var body getCheckPhonesBody
 	if err := c.ShouldBindJSON(&body); err != nil {

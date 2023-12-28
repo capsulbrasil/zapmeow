@@ -28,14 +28,15 @@ func NewLogoutHandler(
 }
 
 // Logout from WhatsApp
-// @Summary Logout from WhatsApp
-// @Description Logs out from the specified WhatsApp instance.
-// @Tags WhatsApp Logout
-// @Param instanceId path string true "Instance ID"
-// @Accept json
-// @Produce json
-// @Success 200 {object} map[string]interface{} "Logout successful"
-// @Router /{instanceId}/logout [post]
+//
+//	@Summary		Logout from WhatsApp
+//	@Description	Logs out from the specified WhatsApp instance.
+//	@Tags			WhatsApp Logout
+//	@Param			instanceId	path	string	true	"Instance ID"
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{object}	map[string]interface{}	"Logout successful"
+//	@Router			/{instanceId}/logout [post]
 func (h *logoutHandler) Handler(c *gin.Context) {
 	instanceID := c.Param("instanceId")
 	instance, err := h.whatsAppService.GetInstance(instanceID)

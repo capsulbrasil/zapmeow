@@ -27,14 +27,15 @@ func NewGetProfileInfoHandler(
 }
 
 // Get Profile Information
-// @Summary Get Profile Information
-// @Description Retrieves profile information.
-// @Tags WhatsApp Profile
-// @Param instanceId path string true "Instance ID"
-// @Accept json
-// @Produce json
-// @Success 200 {object} getProfileInfoResponse "Profile Information"
-// @Router /{instanceId}/profile [get]
+//
+//	@Summary		Get Profile Information
+//	@Description	Retrieves profile information.
+//	@Tags			WhatsApp Profile
+//	@Param			instanceId	path	string	true	"Instance ID"
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{object}	getProfileInfoResponse	"Profile Information"
+//	@Router			/{instanceId}/profile [get]
 func (h *getProfileInfoHandler) Handler(c *gin.Context) {
 	instanceID := c.Param("instanceId")
 	instance, err := h.whatsAppService.GetInstance(instanceID)

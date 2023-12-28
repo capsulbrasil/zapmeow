@@ -17,11 +17,11 @@ import (
 	"github.com/joho/godotenv"
 )
 
-// @title ZapMeow API
-// @version 1.0
-// @description API to handle multiple WhatsApp instances
-// @host localhost:8900
-// @BasePath /api
+// @title			ZapMeow API
+// @version		1.0
+// @description	API to handle multiple WhatsApp instances
+// @host			localhost:8900
+// @BasePath		/api
 func main() {
 	logger.Init()
 

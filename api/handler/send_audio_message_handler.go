@@ -36,15 +36,16 @@ func NewSendAudioMessageHandler(
 }
 
 // Send Audio Message on WhatsApp
-// @Summary Send Audio Message on WhatsApp
-// @Description Sends an audio message on WhatsApp using the specified instance.
-// @Tags WhatsApp Chat
-// @Param instanceId path string true "Instance ID"
-// @Param data body sendAudioMessageBody true "Audio message body"
-// @Accept json
-// @Produce json
-// @Success 200 {object} sendAudioMessageResponse "Message Send Response"
-// @Router /{instanceId}/chat/send/audio [post]
+//
+//	@Summary		Send Audio Message on WhatsApp
+//	@Description	Sends an audio message on WhatsApp using the specified instance.
+//	@Tags			WhatsApp Chat
+//	@Param			instanceId	path	string					true	"Instance ID"
+//	@Param			data		body	sendAudioMessageBody	true	"Audio message body"
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{object}	sendAudioMessageResponse	"Message Send Response"
+//	@Router			/{instanceId}/chat/send/audio [post]
 func (h *sendAudioMessageHandler) Handler(c *gin.Context) {
 	instanceID := c.Param("instanceId")
 	instance, err := h.whatsAppService.GetInstance(instanceID)

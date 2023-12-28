@@ -35,13 +35,14 @@ func NewGetQrCodeHandler(
 }
 
 // Get QR Code for WhatsApp Login
-// @Summary Get WhatsApp QR Code
-// @Description Returns a QR code to initiate WhatsApp login.
-// @Tags WhatsApp Login
-// @Param instanceId path string true "Instance ID"
-// @Produce json
-// @Success 200 {object} getQrCodeResponse "QR Code"
-// @Router /{instanceId}/qrcode [get]
+//
+//	@Summary		Get WhatsApp QR Code
+//	@Description	Returns a QR code to initiate WhatsApp login.
+//	@Tags			WhatsApp Login
+//	@Param			instanceId	path	string	true	"Instance ID"
+//	@Produce		json
+//	@Success		200	{object}	getQrCodeResponse	"QR Code"
+//	@Router			/{instanceId}/qrcode [get]
 func (h *getQrCodeHandler) Handler(c *gin.Context) {
 	instanceID := c.Param("instanceId")
 	_, err := h.whatsAppService.GetInstance(instanceID)

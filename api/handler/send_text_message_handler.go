@@ -35,15 +35,16 @@ func NewSendTextMessageHandler(
 }
 
 // Send Text Message on WhatsApp
-// @Summary Send Text Message on WhatsApp
-// @Description Sends a text message on WhatsApp using the specified instance.
-// @Tags WhatsApp Chat
-// @Param instanceId path string true "Instance ID"
-// @Param data body sendTextMessageBody true "Text message body"
-// @Accept json
-// @Produce json
-// @Success 200 {object} sendTextMessageResponse "Message Send Response"
-// @Router /{instanceId}/chat/send/text [post]
+//
+//	@Summary		Send Text Message on WhatsApp
+//	@Description	Sends a text message on WhatsApp using the specified instance.
+//	@Tags			WhatsApp Chat
+//	@Param			instanceId	path	string				true	"Instance ID"
+//	@Param			data		body	sendTextMessageBody	true	"Text message body"
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{object}	sendTextMessageResponse	"Message Send Response"
+//	@Router			/{instanceId}/chat/send/text [post]
 func (h *sendTextMessageHandler) Handler(c *gin.Context) {
 	instanceID := c.Param("instanceId")
 	instance, err := h.whatsAppService.GetInstance(instanceID)
