@@ -7,7 +7,7 @@ import (
 )
 
 type Queue interface {
-	Enqueue(queueName string, values ...interface{}) error
+	Enqueue(queueName string, data []byte) error
 	Dequeue(queueName string) ([]byte, error)
 }
 
@@ -29,8 +29,8 @@ func NewQueue(addr string, password string) *queue {
 	}
 }
 
-func (q *queue) Enqueue(queueName string, values ...interface{}) error {
-	return q.client.LPush(queueName, values).Err()
+func (q *queue) Enqueue(queueName string, data []byte) error {
+	return q.client.LPush(queueName, data).Err()
 }
 
 func (q *queue) Dequeue(queueName string) ([]byte, error) {
