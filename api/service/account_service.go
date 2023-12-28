@@ -54,7 +54,12 @@ func (a *accountService) DeleteAccountMessages(instanceID string) error {
 
 func (a *accountService) deleteAccountDirectory(instanceID string) error {
 	dirPath := helper.MakeAccountStoragePath(instanceID)
-	err := filepath.Walk(dirPath, func(path string, info os.FileInfo, err error) error {
+	_, err := os.Stat(dirPath)
+	if err != nil {
+		return nil
+	}
+
+	err = filepath.Walk(dirPath, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
