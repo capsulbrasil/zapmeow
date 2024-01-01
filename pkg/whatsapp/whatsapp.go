@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"time"
+	"zapmeow/config"
 	"zapmeow/pkg/logger"
 
 	"github.com/vincent-petithory/dataurl"
@@ -124,7 +125,14 @@ type whatsApp struct {
 }
 
 func NewWhatsApp(databasePath string) *whatsApp {
-	dbLog := waLog.Stdout("Database", "DEBUG", true)
+	cfg := config.Load()
+
+	var level = "DEBUG"
+	if cfg.Environment == config.Production {
+		level = "ERROR"
+	}
+	dbLog := waLog.Stdout("Database", level, true)
+
 	container, err := sqlstore.New("sqlite3", "file:"+databasePath+"?_foreign_keys=on", dbLog)
 	if err != nil {
 		logger.Fatal(err)
@@ -341,10 +349,14 @@ func (w *whatsApp) ParseEventMessage(instance *Instance, message *events.Message
 }
 
 func (w *whatsApp) createClient(deviceStore *store.Device) *whatsmeow.Client {
-	// TODO: verificar se o ambiente é de produção ou dev
-	log := waLog.Stdout("Client", "DEBUG", true)
-	client := whatsmeow.NewClient(deviceStore, log)
-	return client
+	cfg := config.Load()
+
+	var level = "DEBUG"
+	if cfg.Environment == config.Production {
+		level = "ERROR"
+	}
+	log := waLog.Stdout("Client", level, true)
+	return whatsmeow.NewClient(deviceStore, log)
 }
 
 func (w *whatsApp) uploadMedia(instance *Instance, media *dataurl.DataURL, mediaType MediaType) (*UploadResponse, error) {

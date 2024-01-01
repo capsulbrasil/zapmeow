@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"sync"
 	"zapmeow/api/model"
 	"zapmeow/api/repository"
@@ -27,17 +28,17 @@ import (
 func main() {
 	docs.SwaggerInfo.BasePath = "/api"
 
-	logger.Init()
-
 	err := godotenv.Load()
 	if err != nil {
 		logger.Fatal("Error loading dotfile. ", err)
 	}
-	cfg := config.Load()
 
+	cfg := config.Load()
 	if cfg.Environment == config.Production {
 		gin.SetMode(gin.ReleaseMode)
 	}
+
+	logger.Init()
 
 	var instances sync.Map // whatsmeow instances
 	var mutex sync.Mutex
@@ -111,6 +112,7 @@ func main() {
 	}
 
 	go func() {
+		fmt.Println("Server is running")
 		if err := r.Run(cfg.Port); err != nil {
 			logger.Fatal(err)
 		}

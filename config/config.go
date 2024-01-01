@@ -1,6 +1,8 @@
 package config
 
-import "os"
+import (
+	"os"
+)
 
 type Environment = uint
 
@@ -28,10 +30,10 @@ func Load() Config {
 	redisAddr := os.Getenv("REDIS_ADDR")
 	redisPassword := os.Getenv("REDIS_PASSWORD")
 	port := os.Getenv("PORT")
-	env := getEnvironment()
+	environment := getEnvironment()
 
 	return Config{
-		Environment:            env,
+		Environment:            environment,
 		StoragePath:            storagePath,
 		WebhookURL:             webhookURL,
 		DatabaseURL:            databaseURL,

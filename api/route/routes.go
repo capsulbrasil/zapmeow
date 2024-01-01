@@ -3,6 +3,7 @@ package route
 import (
 	"zapmeow/api/handler"
 	"zapmeow/api/service"
+	"zapmeow/config"
 	"zapmeow/pkg/zapmeow"
 
 	"github.com/gin-gonic/gin"
@@ -10,13 +11,20 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
+func makeEngine(cfg config.Config) *gin.Engine {
+	if cfg.Environment == config.Production {
+		return gin.New()
+	}
+	return gin.Default()
+}
+
 func SetupRouter(
 	app *zapmeow.ZapMeow,
 	whatsAppService service.WhatsAppService,
 	messageService service.MessageService,
 	accountService service.AccountService,
 ) *gin.Engine {
-	router := gin.Default()
+	router := makeEngine(app.Config)
 
 	getQrCodeHandler := handler.NewGetQrCodeHandler(
 		app,

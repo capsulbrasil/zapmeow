@@ -2,6 +2,7 @@ package logger
 
 import (
 	"os"
+	"zapmeow/config"
 
 	"github.com/sirupsen/logrus"
 )
@@ -11,12 +12,17 @@ type Fields = logrus.Fields
 var log *logrus.Logger
 
 func Init() {
+	cfg := config.Load()
 	log = logrus.New()
 
 	log.SetFormatter(&logrus.TextFormatter{
 		DisableColors: true,
 		FullTimestamp: true,
 	})
+
+	if cfg.Environment == config.Production {
+		log.SetLevel(logrus.ErrorLevel)
+	}
 
 	log.SetOutput(os.Stdout)
 }
