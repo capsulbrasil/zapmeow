@@ -19,7 +19,7 @@ type Config struct {
 	RedisAddr              string
 	RedisPassword          string
 	Port                   string
-	QueueName              string
+	HistorySyncQueueName   string
 	MaxMessagesForChatSync int
 }
 
@@ -40,7 +40,7 @@ func Load() Config {
 		RedisAddr:              redisAddr,
 		RedisPassword:          redisPassword,
 		Port:                   port,
-		QueueName:              "queue:history-sync",
+		HistorySyncQueueName:   "queue:history-sync",
 		MaxMessagesForChatSync: 10,
 	}
 }

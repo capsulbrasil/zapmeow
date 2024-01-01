@@ -35,11 +35,11 @@ func (q *historySyncQueue) Enqueue(item HistorySyncQueueData) error {
 		return err
 	}
 
-	return q.app.Queue.Enqueue(q.app.Config.QueueName, jsonData)
+	return q.app.Queue.Enqueue(q.app.Config.HistorySyncQueueName, jsonData)
 }
 
 func (q *historySyncQueue) Dequeue() (*HistorySyncQueueData, error) {
-	result, err := q.app.Queue.Dequeue(q.app.Config.QueueName)
+	result, err := q.app.Queue.Dequeue(q.app.Config.HistorySyncQueueName)
 	if err != nil {
 		logger.Error("Error dequeuing history sync", logger.Fields{
 			"error": err,
