@@ -7,6 +7,7 @@ import (
 	"zapmeow/api/route"
 	"zapmeow/api/service"
 	"zapmeow/config"
+	"zapmeow/docs"
 	"zapmeow/pkg/database"
 	"zapmeow/pkg/logger"
 	"zapmeow/pkg/queue"
@@ -14,6 +15,7 @@ import (
 	"zapmeow/pkg/zapmeow"
 	"zapmeow/worker"
 
+	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 )
 
@@ -23,6 +25,8 @@ import (
 // @host			localhost:8900
 // @BasePath		/api
 func main() {
+	docs.SwaggerInfo.BasePath = "/api"
+
 	logger.Init()
 
 	err := godotenv.Load()
@@ -30,6 +34,10 @@ func main() {
 		logger.Fatal("Error loading dotfile. ", err)
 	}
 	cfg := config.Load()
+
+	if cfg.Environment == config.Production {
+		gin.SetMode(gin.ReleaseMode)
+	}
 
 	var instances sync.Map // whatsmeow instances
 	var mutex sync.Mutex

@@ -3,22 +3,12 @@ package route
 import (
 	"zapmeow/api/handler"
 	"zapmeow/api/service"
-	"zapmeow/config"
 	"zapmeow/pkg/zapmeow"
-
-	docs "zapmeow/docs"
 
 	"github.com/gin-gonic/gin"
 	swaggerfiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
-
-func makeEngine(app *zapmeow.ZapMeow) *gin.Engine {
-	if app.Config.Environment == config.Development {
-		return gin.New()
-	}
-	return gin.Default()
-}
 
 func SetupRouter(
 	app *zapmeow.ZapMeow,
@@ -26,9 +16,7 @@ func SetupRouter(
 	messageService service.MessageService,
 	accountService service.AccountService,
 ) *gin.Engine {
-	docs.SwaggerInfo.BasePath = "/api"
-
-	router := makeEngine(app)
+	router := gin.Default()
 
 	getQrCodeHandler := handler.NewGetQrCodeHandler(
 		app,
