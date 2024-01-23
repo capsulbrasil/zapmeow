@@ -323,8 +323,8 @@ func (w *whatsAppService) handleMessage(instanceId string, evt *events.Message) 
 	}
 
 	body := map[string]interface{}{
-		"InstanceId": instanceId,
-		"Message":    response.NewMessageResponse(message),
+		"instanceId": instanceId,
+		"message":    response.NewMessageResponse(message),
 	}
 
 	err = http.Request(w.app.Config.WebhookURL, body)
