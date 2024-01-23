@@ -35,13 +35,22 @@ const docTemplate = `{
                         "name": "instanceId",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "description": "Phone",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.getMessagesBody"
+                        }
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "List of chat messages",
                         "schema": {
-                            "$ref": "#/definitions/controllers.getMessagesResponse"
+                            "$ref": "#/definitions/handler.getMessagesResponse"
                         }
                     }
                 }
@@ -74,7 +83,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/controllers.audioMessageBody"
+                            "$ref": "#/definitions/handler.sendAudioMessageBody"
                         }
                     }
                 ],
@@ -82,7 +91,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Message Send Response",
                         "schema": {
-                            "$ref": "#/definitions/controllers.sendAudioMessageResponse"
+                            "$ref": "#/definitions/handler.sendAudioMessageResponse"
                         }
                     }
                 }
@@ -115,7 +124,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/controllers.imageMessageBody"
+                            "$ref": "#/definitions/handler.sendImageMessageBody"
                         }
                     }
                 ],
@@ -123,7 +132,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Message Send Response",
                         "schema": {
-                            "$ref": "#/definitions/controllers.sendImageMessageResponse"
+                            "$ref": "#/definitions/handler.sendImageMessageResponse"
                         }
                     }
                 }
@@ -156,7 +165,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/controllers.textMessageBody"
+                            "$ref": "#/definitions/handler.sendTextMessageBody"
                         }
                     }
                 ],
@@ -164,7 +173,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Message Send Response",
                         "schema": {
-                            "$ref": "#/definitions/controllers.sendTextMessageResponse"
+                            "$ref": "#/definitions/handler.sendTextMessageResponse"
                         }
                     }
                 }
@@ -197,7 +206,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/controllers.phoneCheckBody"
+                            "$ref": "#/definitions/handler.getCheckPhonesBody"
                         }
                     }
                 ],
@@ -205,7 +214,7 @@ const docTemplate = `{
                     "200": {
                         "description": "List of verified numbers",
                         "schema": {
-                            "$ref": "#/definitions/controllers.checkPhonesResponse"
+                            "$ref": "#/definitions/handler.getCheckPhonesResponse"
                         }
                     }
                 }
@@ -244,7 +253,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Contact Information",
                         "schema": {
-                            "$ref": "#/definitions/controllers.contactInfoResponse"
+                            "$ref": "#/definitions/handler.contactInfoResponse"
                         }
                     }
                 }
@@ -309,7 +318,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Profile Information",
                         "schema": {
-                            "$ref": "#/definitions/controllers.getProfileInfoResponse"
+                            "$ref": "#/definitions/handler.getProfileInfoResponse"
                         }
                     }
                 }
@@ -336,9 +345,9 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "QR code",
+                        "description": "QR Code",
                         "schema": {
-                            "$ref": "#/definitions/controllers.getQrCodeResponse"
+                            "$ref": "#/definitions/handler.getQrCodeResponse"
                         }
                     }
                 }
@@ -370,7 +379,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Status Response",
                         "schema": {
-                            "$ref": "#/definitions/controllers.getStatusResponse"
+                            "$ref": "#/definitions/handler.getStatusResponse"
                         }
                     }
                 }
@@ -378,114 +387,15 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "controllers.audioMessageBody": {
-            "type": "object",
-            "properties": {
-                "base64": {
-                    "type": "string"
-                },
-                "phone": {
-                    "type": "string"
-                }
-            }
-        },
-        "controllers.checkPhonesResponse": {
-            "type": "object",
-            "properties": {
-                "phones": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/controllers.phone"
-                    }
-                }
-            }
-        },
-        "controllers.contactInfoResponse": {
+        "handler.contactInfoResponse": {
             "type": "object",
             "properties": {
                 "info": {
-                    "$ref": "#/definitions/services.ContactInfo"
+                    "$ref": "#/definitions/whatsapp.ContactInfo"
                 }
             }
         },
-        "controllers.getMessagesResponse": {
-            "type": "object",
-            "properties": {
-                "messages": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/services.Message"
-                    }
-                }
-            }
-        },
-        "controllers.getProfileInfoResponse": {
-            "type": "object",
-            "properties": {
-                "info": {
-                    "$ref": "#/definitions/services.ContactInfo"
-                }
-            }
-        },
-        "controllers.getQrCodeResponse": {
-            "type": "object",
-            "properties": {
-                "qrCode": {
-                    "type": "string"
-                }
-            }
-        },
-        "controllers.getStatusResponse": {
-            "type": "object",
-            "properties": {
-                "status": {
-                    "type": "string"
-                }
-            }
-        },
-        "controllers.imageMessageBody": {
-            "type": "object",
-            "properties": {
-                "base64": {
-                    "type": "string"
-                },
-                "phone": {
-                    "type": "string"
-                }
-            }
-        },
-        "controllers.phone": {
-            "type": "object",
-            "properties": {
-                "isRegistered": {
-                    "type": "boolean"
-                },
-                "jid": {
-                    "type": "object",
-                    "properties": {
-                        "ad": {
-                            "type": "boolean"
-                        },
-                        "agent": {
-                            "type": "integer"
-                        },
-                        "device": {
-                            "type": "integer"
-                        },
-                        "server": {
-                            "type": "string"
-                        },
-                        "user": {
-                            "type": "string"
-                        }
-                    }
-                },
-                "query": {
-                    "type": "string"
-                }
-            }
-        },
-        "controllers.phoneCheckBody": {
+        "handler.getCheckPhonesBody": {
             "type": "object",
             "properties": {
                 "phones": {
@@ -496,31 +406,99 @@ const docTemplate = `{
                 }
             }
         },
-        "controllers.sendAudioMessageResponse": {
+        "handler.getCheckPhonesResponse": {
             "type": "object",
             "properties": {
-                "message": {
-                    "$ref": "#/definitions/services.Message"
+                "phones": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/whatsapp.IsOnWhatsAppResponse"
+                    }
                 }
             }
         },
-        "controllers.sendImageMessageResponse": {
+        "handler.getMessagesBody": {
             "type": "object",
             "properties": {
-                "message": {
-                    "$ref": "#/definitions/services.Message"
+                "phone": {
+                    "type": "string"
                 }
             }
         },
-        "controllers.sendTextMessageResponse": {
+        "handler.getMessagesResponse": {
             "type": "object",
             "properties": {
-                "message": {
-                    "$ref": "#/definitions/services.Message"
+                "messages": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/response.Message"
+                    }
                 }
             }
         },
-        "controllers.textMessageBody": {
+        "handler.getProfileInfoResponse": {
+            "type": "object",
+            "properties": {
+                "info": {
+                    "$ref": "#/definitions/whatsapp.ContactInfo"
+                }
+            }
+        },
+        "handler.getQrCodeResponse": {
+            "type": "object",
+            "properties": {
+                "qrcode": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.getStatusResponse": {
+            "type": "object",
+            "properties": {
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.sendAudioMessageBody": {
+            "type": "object",
+            "properties": {
+                "base64": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.sendAudioMessageResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "$ref": "#/definitions/response.Message"
+                }
+            }
+        },
+        "handler.sendImageMessageBody": {
+            "type": "object",
+            "properties": {
+                "base64": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.sendImageMessageResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "$ref": "#/definitions/response.Message"
+                }
+            }
+        },
+        "handler.sendTextMessageBody": {
             "type": "object",
             "properties": {
                 "phone": {
@@ -531,7 +509,50 @@ const docTemplate = `{
                 }
             }
         },
-        "services.ContactInfo": {
+        "handler.sendTextMessageResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "$ref": "#/definitions/response.Message"
+                }
+            }
+        },
+        "response.Message": {
+            "type": "object",
+            "properties": {
+                "body": {
+                    "type": "string"
+                },
+                "chat": {
+                    "type": "string"
+                },
+                "from_me": {
+                    "type": "boolean"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "media_base64": {
+                    "type": "string"
+                },
+                "media_mimetype": {
+                    "type": "string"
+                },
+                "media_type": {
+                    "type": "string"
+                },
+                "message_id": {
+                    "type": "string"
+                },
+                "sender": {
+                    "type": "string"
+                },
+                "timestamp": {
+                    "type": "string"
+                }
+            }
+        },
+        "whatsapp.ContactInfo": {
             "type": "object",
             "properties": {
                 "name": {
@@ -548,42 +569,16 @@ const docTemplate = `{
                 }
             }
         },
-        "services.Message": {
+        "whatsapp.IsOnWhatsAppResponse": {
             "type": "object",
             "properties": {
-                "body": {
-                    "type": "string"
-                },
-                "chat": {
-                    "type": "string"
-                },
-                "fromMe": {
+                "is_registered": {
                     "type": "boolean"
                 },
-                "id": {
-                    "type": "integer"
-                },
-                "mediaData": {
-                    "type": "object",
-                    "properties": {
-                        "base64": {
-                            "type": "string"
-                        },
-                        "mimetype": {
-                            "type": "string"
-                        }
-                    }
-                },
-                "mediaType": {
+                "phone": {
                     "type": "string"
                 },
-                "messageID": {
-                    "type": "string"
-                },
-                "sender": {
-                    "type": "string"
-                },
-                "timestamp": {
+                "query": {
                     "type": "string"
                 }
             }
