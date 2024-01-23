@@ -83,7 +83,7 @@ func (h *sendAudioMessageHandler) Handler(c *gin.Context) {
 		return
 	}
 
-	resp, err := h.whatsAppService.SendImageMessage(instance, jid, audioURL, mimitype)
+	resp, err := h.whatsAppService.SendAudioMessage(instance, jid, audioURL, mimitype)
 	if err != nil {
 		response.ErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return
