@@ -62,6 +62,7 @@ func main() {
 	err = databaseClient.AutoMigrate(
 		&models.Account{},
 		&models.Message{},
+		&models.Proxy{},
 	)
 	if err != nil {
 		panic(err)
@@ -98,14 +99,17 @@ func main() {
 	// repositories
 	messageRepo := repositories.NewMessageRepository(app.DatabaseClient)
 	accountRepo := repositories.NewAccountRepository(app.DatabaseClient)
+	proxyRepo := repositories.NewProxyRepository(app.DatabaseClient)
 
 	// services
 	messageService := services.NewMessageService(messageRepo)
 	accountService := services.NewAccountService(accountRepo, messageService)
+	proxyService := services.NewProxyService(proxyRepo)
 	wppService := services.NewWppService(
 		app,
 		messageService,
 		accountService,
+		proxyService,
 	)
 
 	// workers
@@ -135,6 +139,12 @@ func main() {
 		if err != nil {
 			fmt.Println("[instance]: ", err)
 		}
+	}
+
+	fmt.Println("loading proxys...")
+	err = proxyService.FromJSON("./proxys.json")
+	if err != nil {
+		fmt.Println("Error ao ler proxy", err)
 	}
 
 	go func() {

@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
+	"net/url"
 	"os"
 	"time"
 	"zapmeow/configs"
@@ -25,6 +27,7 @@ type wppService struct {
 	app            *configs.ZapMeow
 	messageService MessageService
 	accountService AccountService
+	proxyService   ProxyService
 }
 
 type ContactInfo struct {
@@ -105,11 +108,13 @@ func NewWppService(
 	app *configs.ZapMeow,
 	messageService MessageService,
 	accountService AccountService,
+	proxyService ProxyService,
 ) *wppService {
 	return &wppService{
 		app:            app,
 		messageService: messageService,
 		accountService: accountService,
+		proxyService:   proxyService,
 	}
 }
 
@@ -126,8 +131,9 @@ func (w *wppService) GetInstance(instanceID string) (*configs.Instance, error) {
 	}
 
 	w.app.StoreInstance(instanceID, &configs.Instance{
-		ID:     instanceID,
-		Client: client,
+		ID:      instanceID,
+		Client:  client,
+		ProxyID: 0,
 	})
 
 	instance = w.app.LoadInstance(instanceID)
@@ -226,6 +232,23 @@ func (w *wppService) SendMessage(instanceID string, jid types.JID, message *waPr
 	instance, err := w.GetAuthenticatedInstance(instanceID)
 	if err != nil {
 		return SendMessageResponse{}, err
+	}
+
+	proxy, _ := w.proxyService.GetProxy(instance.ProxyID)
+
+	if proxy.Ranking == 0 {
+		proxy, err := w.proxyService.GetProxyWithHighestRanking()
+		if err != nil {
+			return SendMessageResponse{}, err
+		}
+		instance.ProxyID = proxy.ID
+
+		instance.Client.SetProxy(http.ProxyURL(&url.URL{
+			Scheme: proxy.Scheme,
+			Host:   proxy.Ip + ":" + proxy.Port,
+		}))
+		instance.Client.Disconnect()
+		instance.Client.Connect()
 	}
 
 	resp, err := instance.Client.SendMessage(context.Background(), jid, message)
@@ -469,13 +492,11 @@ func (w *wppService) getClient(instanceID string) (*whatsmeow.Client, error) {
 		if err != nil {
 			return nil, err
 		}
-		return createClient(
-			w.app.Config,
+		return w.createClient(
 			w.app.WhatsmeowContainer.NewDevice(),
 		), nil
 	} else if account.Status != "CONNECTED" {
-		return createClient(
-			w.app.Config,
+		return w.createClient(
 			w.app.WhatsmeowContainer.NewDevice(),
 		), nil
 	}
@@ -492,15 +513,13 @@ func (w *wppService) getClient(instanceID string) (*whatsmeow.Client, error) {
 	}
 
 	if device != nil {
-		return createClient(
-			w.app.Config,
+		return w.createClient(
 			device,
 		), nil
 	}
 
 	device = w.app.WhatsmeowContainer.NewDevice()
-	return createClient(
-		w.app.Config,
+	return w.createClient(
 		device,
 	), nil
 }
@@ -568,7 +587,19 @@ func (w *wppService) eventHandler(instanceID string, rawEvt interface{}) {
 		w.handleConnected(instanceID)
 	case *events.LoggedOut:
 		w.handleLoggedOut(instanceID)
+	case *events.TempBanReason:
+	case *events.TemporaryBan:
+		w.handleBan(instanceID)
 	}
+}
+
+func (w *wppService) handleBan(instanceID string) {
+	var instance = w.app.LoadInstance(instanceID)
+	proxy, _ := w.proxyService.GetProxy(instance.ProxyID)
+
+	w.proxyService.UpdateProxy(proxy.ID, map[string]interface{}{
+		"Ranking": proxy.Ranking - 1,
+	})
 }
 
 func (w *wppService) handleHistorySync(instanceID string, evt *events.HistorySync) {
@@ -670,10 +701,21 @@ func (w *wppService) handleMessage(instanceId string, evt *events.Message) {
 	}
 }
 
-func createClient(config configs.ZapMeowConfig, deviceStore *store.Device) *whatsmeow.Client {
-	if config.Env == "production" {
-		return whatsmeow.NewClient(deviceStore, nil)
+func (w *wppService) createClient(deviceStore *store.Device) *whatsmeow.Client {
+	var client *whatsmeow.Client
+	if w.app.Config.Env == "production" {
+		client = whatsmeow.NewClient(deviceStore, nil)
+	} else {
+		log := waLog.Stdout("Client", "DEBUG", true)
+		client = whatsmeow.NewClient(deviceStore, log)
 	}
-	log := waLog.Stdout("Client", "DEBUG", true)
-	return whatsmeow.NewClient(deviceStore, log)
+
+	proxy, _ := w.proxyService.GetProxyWithHighestRanking()
+	fmt.Println("proxy =>>>", proxy)
+	client.SetProxy(http.ProxyURL(&url.URL{
+		Scheme: proxy.Scheme,
+		Host:   proxy.Ip + ":" + proxy.Port,
+	}))
+
+	return client
 }

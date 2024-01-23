@@ -10,8 +10,9 @@ import (
 )
 
 type Instance struct {
-	ID     string
-	Client *whatsmeow.Client
+	ID      string
+	ProxyID uint
+	Client  *whatsmeow.Client
 }
 
 type ZapMeow struct {
