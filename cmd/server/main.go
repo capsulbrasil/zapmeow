@@ -118,7 +118,9 @@ func main() {
 		}
 	}()
 
-	go historySyncWorker.ProcessQueue()
+	if cfg.HistorySync {
+		go historySyncWorker.ProcessQueue()
+	}
 
 	<-*app.StopCh
 	app.Wg.Wait()

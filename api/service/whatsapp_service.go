@@ -240,6 +240,9 @@ func (w *whatsAppService) eventHandler(instanceID string, rawEvt interface{}) {
 }
 
 func (w *whatsAppService) handleHistorySync(instanceID string, evt *events.HistorySync) {
+	if !w.app.Config.HistorySync {
+		return
+	}
 	history, _ := proto.Marshal(evt.Data)
 
 	q := queue.NewHistorySyncQueue(w.app)

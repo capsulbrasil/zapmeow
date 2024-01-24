@@ -127,7 +127,7 @@ func (q *historySyncWorker) processMessages(evt *waProto.HistorySync, account *m
 			return nil, err
 		}
 
-		if count > int64(q.app.Config.MaxMessagesForChatSync) {
+		if count > int64(q.app.Config.MaxMessageSync) {
 			continue
 		}
 
@@ -145,7 +145,7 @@ func (q *historySyncWorker) processMessages(evt *waProto.HistorySync, account *m
 			return eventsMessage[i].Info.Timestamp.After(eventsMessage[j].Info.Timestamp)
 		})
 
-		maxMessages := helper.Min(q.app.Config.MaxMessagesForChatSync, len(eventsMessage))
+		maxMessages := helper.Min(q.app.Config.MaxMessageSync, len(eventsMessage))
 		slice := eventsMessage[:maxMessages]
 
 		for _, evtMessage := range slice {
