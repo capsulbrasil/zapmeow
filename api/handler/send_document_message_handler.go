@@ -36,17 +36,17 @@ func NewSendDocumentMessageHandler(
 	}
 }
 
-// Send Image Message on WhatsApp
+// Send Document Message on WhatsApp
 //
-//	@Summary		Send Image Message on WhatsApp
-//	@Description	Sends an image message on WhatsApp using the specified instance.
+//	@Summary		Send Document Message on WhatsApp
+//	@Description	Sends an Document message on WhatsApp using the specified instance.
 //	@Tags			WhatsApp Chat
 //	@Param			instanceId	path	string					true	"Instance ID"
-//	@Param			data		body	sendDocumentMessageBody	true	"Image message body"
+//	@Param			data		body	sendDocumentMessageBody	true	"Document message body"
 //	@Accept			json
 //	@Produce		json
 //	@Success		200	{object}	sendDocumentMessageResponse	"Message Send Response"
-//	@Router			/{instanceId}/chat/send/image [post]
+//	@Router			/{instanceId}/chat/send/document [post]
 func (h *sendDocumentMessageHandler) Handler(c *gin.Context) {
 	instanceID := c.Param("instanceId")
 	instance, err := h.whatsAppService.GetInstance(instanceID)
