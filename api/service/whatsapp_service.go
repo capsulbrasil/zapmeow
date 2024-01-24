@@ -29,6 +29,7 @@ type WhatsAppService interface {
 	Logout(instance *whatsapp.Instance) error
 	SendTextMessage(instance *whatsapp.Instance, jid whatsapp.JID, text string) (whatsapp.MessageResponse, error)
 	SendAudioMessage(instance *whatsapp.Instance, jid whatsapp.JID, audioURL *dataurl.DataURL, mimitype string) (whatsapp.MessageResponse, error)
+	SendDocumentMessage(instance *whatsapp.Instance, jid whatsapp.JID, documentURL *dataurl.DataURL, mimitype string, filename string) (whatsapp.MessageResponse, error)
 	SendImageMessage(instance *whatsapp.Instance, jid whatsapp.JID, imageURL *dataurl.DataURL, mimitype string) (whatsapp.MessageResponse, error)
 	GetContactInfo(instance *whatsapp.Instance, jid whatsapp.JID) (*whatsapp.ContactInfo, error)
 	ParseEventMessage(instance *whatsapp.Instance, message *events.Message) (whatsapp.Message, error)
@@ -55,6 +56,16 @@ func (w *whatsAppService) SendTextMessage(
 	text string,
 ) (whatsapp.MessageResponse, error) {
 	return w.whatsApp.SendTextMessage(instance, jid, text)
+}
+
+func (w *whatsAppService) SendDocumentMessage(
+	instance *whatsapp.Instance,
+	jid whatsapp.JID,
+	documentURL *dataurl.DataURL,
+	mimitype string,
+	filename string,
+) (whatsapp.MessageResponse, error) {
+	return w.whatsApp.SendDocumentMessage(instance, jid, documentURL, mimitype, filename)
 }
 
 func (w *whatsAppService) SendAudioMessage(

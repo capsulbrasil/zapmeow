@@ -115,6 +115,7 @@ type WhatsApp interface {
 	SendTextMessage(instance *Instance, jid JID, text string) (MessageResponse, error)
 	SendAudioMessage(instance *Instance, jid JID, audioURL *dataurl.DataURL, mimitype string) (MessageResponse, error)
 	SendImageMessage(instance *Instance, jid JID, imageURL *dataurl.DataURL, mimitype string) (MessageResponse, error)
+	SendDocumentMessage(instance *Instance, jid JID, documentURL *dataurl.DataURL, mimitype string, filename string) (MessageResponse, error)
 	GetContactInfo(instance *Instance, jid JID) (*ContactInfo, error)
 	ParseEventMessage(instance *Instance, message *events.Message) (Message, error)
 	IsOnWhatsApp(instance *Instance, phones []string) ([]IsOnWhatsAppResponse, error)
@@ -257,6 +258,28 @@ func (w *whatsApp) SendImageMessage(instance *Instance, jid JID, imageURL *datau
 	return w.sendMessage(instance, jid, message)
 }
 
+func (w *whatsApp) SendDocumentMessage(
+	instance *Instance, jid JID, documentURL *dataurl.DataURL, mimitype string, filename string) (MessageResponse, error) {
+	uploaded, err := w.uploadMedia(instance, documentURL, Document)
+	if err != nil {
+		return MessageResponse{}, err
+	}
+
+	message := &waProto.Message{
+		DocumentMessage: &waProto.DocumentMessage{
+			Url:           proto.String(uploaded.URL),
+			FileName:      &filename,
+			DirectPath:    proto.String(uploaded.DirectPath),
+			MediaKey:      uploaded.MediaKey,
+			Mimetype:      proto.String(mimitype),
+			FileEncSha256: uploaded.FileEncSHA256,
+			FileSha256:    uploaded.FileSHA256,
+			FileLength:    proto.Uint64(uint64(len(documentURL.Data))),
+		},
+	}
+	return w.sendMessage(instance, jid, message)
+}
+
 func (w *whatsApp) IsOnWhatsApp(instance *Instance, phones []string) ([]IsOnWhatsAppResponse, error) {
 	isOnWhatsAppResponse, err := instance.Client.IsOnWhatsApp(phones)
 	if err != nil {
@@ -366,6 +389,8 @@ func (w *whatsApp) uploadMedia(instance *Instance, media *dataurl.DataURL, media
 		mType = whatsmeow.MediaImage
 	case Audio:
 		mType = whatsmeow.MediaAudio
+	case Document:
+		mType = whatsmeow.MediaDocument
 	default:
 		return nil, errors.New("unknown media type")
 	}

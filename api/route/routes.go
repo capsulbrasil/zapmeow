@@ -67,6 +67,10 @@ func SetupRouter(
 		whatsAppService,
 		messageService,
 	)
+	sendDocumentMessageHandler := handler.NewSendDocumentMessageHandler(
+		whatsAppService,
+		messageService,
+	)
 
 	group := router.Group("/api")
 
@@ -80,6 +84,7 @@ func SetupRouter(
 	group.POST("/:instanceId/chat/send/text", sendTextMessageHandler.Handler)
 	group.POST("/:instanceId/chat/send/image", sendImageMessageHandler.Handler)
 	group.POST("/:instanceId/chat/send/audio", sendAudioMessageHandler.Handler)
+	group.POST("/:instanceId/chat/send/document", sendDocumentMessageHandler.Handler)
 	group.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
 
 	return router
