@@ -1,6 +1,7 @@
 FROM golang:1.20-alpine
 
 RUN apk add --no-cache gcc musl-dev
+RUN apk add mailcap
 
 WORKDIR /app
 

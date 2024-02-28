@@ -49,7 +49,7 @@ const (
 	Image
 	Document
 	Sticker
-	Video
+	// Video
 )
 
 func (m MediaType) String() string {
@@ -60,8 +60,8 @@ func (m MediaType) String() string {
 		return "document"
 	case Sticker:
 		return "sticker"
-	case Video:
-		return "video"
+	// case Video:
+	// 	return "video"
 	case Image:
 		return "image"
 	}
@@ -468,19 +468,19 @@ func (w *whatsApp) downloadMedia(instance *Instance, message *waProto.Message) (
 		}, nil
 	}
 
-	video := message.GetVideoMessage()
-	if video != nil {
-		data, err := instance.Client.Download(video)
-		if err != nil {
-			return &DownloadResponse{Type: Video}, err
-		}
+	// video := message.GetVideoMessage()
+	// if video != nil {
+	// 	data, err := instance.Client.Download(video)
+	// 	if err != nil {
+	// 		return &DownloadResponse{Type: Video}, err
+	// 	}
 
-		return &DownloadResponse{
-			Data:     data,
-			Type:     Video,
-			Mimetype: video.GetMimetype(),
-		}, nil
-	}
+	// 	return &DownloadResponse{
+	// 		Data:     data,
+	// 		Type:     Video,
+	// 		Mimetype: video.GetMimetype(),
+	// 	}, nil
+	// }
 
 	return nil, nil
 }

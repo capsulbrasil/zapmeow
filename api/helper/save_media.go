@@ -17,12 +17,15 @@ func SaveMedia(instanceID string, fileName string, data []byte, mimetype string)
 	if err != nil {
 		return "", err
 	}
-	path := fmt.Sprintf("%s/%s%s", dirPath, fileName, exts[0])
 
-	err = os.WriteFile(path, data, 0600)
-	if err != nil {
-		return "", err
+	if len(exts) > 0 {
+		path := fmt.Sprintf("%s/%s%s", dirPath, fileName, exts[0])
+		err = os.WriteFile(path, data, 0600)
+		if err != nil {
+			return "", err
+		}
+		return path, nil
 	}
 
-	return path, nil
+	return "", fmt.Errorf("no extension found for MIME type: %s", mimetype)
 }
