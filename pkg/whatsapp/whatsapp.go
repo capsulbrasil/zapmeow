@@ -285,8 +285,7 @@ func (w *whatsApp) IsOnWhatsApp(instance *Instance, phones []string) ([]IsOnWhat
 	if err != nil {
 		return nil, err
 	}
-
-	data := make([]IsOnWhatsAppResponse, len(isOnWhatsAppResponse))
+	data := make([]IsOnWhatsAppResponse, 0, len(isOnWhatsAppResponse))
 	for _, resp := range isOnWhatsAppResponse {
 		data = append(data, IsOnWhatsAppResponse{
 			Query:        resp.Query,
