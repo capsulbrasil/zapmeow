@@ -202,11 +202,11 @@ func (w *whatsAppService) gerOrCreateInstance(instanceID string) (*whatsapp.Inst
 	}
 
 	jid := types.JID{
-		User:   account.User,
-		Agent:  account.Agent,
-		Device: account.Device,
-		Server: account.Server,
-		AD:     account.AD,
+		User:       account.User,
+		RawAgent:   account.RawAgent,
+		Device:     account.Device,
+		Integrator: account.Integrator,
+		Server:     account.Server,
 	}
 	instance := w.whatsApp.CreateInstanceFromDevice(
 		instanceID,
@@ -260,10 +260,10 @@ func (w *whatsAppService) handleConnected(instanceID string) {
 	var instance = w.app.LoadInstance(instanceID)
 	err := w.accountService.UpdateAccount(instanceID, map[string]interface{}{
 		"User":       instance.Client.Store.ID.User,
-		"Agent":      instance.Client.Store.ID.Agent,
+		"RawAgent":   instance.Client.Store.ID.RawAgent,
 		"Device":     instance.Client.Store.ID.Device,
 		"Server":     instance.Client.Store.ID.Server,
-		"AD":         instance.Client.Store.ID.AD,
+		"Integrator": instance.Client.Store.ID.Integrator,
 		"InstanceID": instance.ID,
 		"Status":     "CONNECTED",
 		"QrCode":     "",

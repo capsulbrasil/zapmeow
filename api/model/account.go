@@ -5,10 +5,10 @@ import "gorm.io/gorm"
 type Account struct {
 	gorm.Model
 	User       string
-	Agent      uint8
-	Device     uint8
+	RawAgent   uint8
+	Device     uint16
+	Integrator uint16
 	Server     string
-	AD         bool
 	QrCode     string
 	Status     string
 	WasSynced  bool

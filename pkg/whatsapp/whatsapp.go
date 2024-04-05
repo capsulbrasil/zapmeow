@@ -152,11 +152,11 @@ func (w *whatsApp) CreateInstance(id string) *Instance {
 
 func (w *whatsApp) CreateInstanceFromDevice(id string, jid JID) *Instance {
 	device, _ := w.container.GetDevice(JID{
-		User:   jid.User,
-		Agent:  jid.Agent,
-		Device: jid.Device,
-		Server: jid.Server,
-		AD:     jid.AD,
+		User:       jid.User,
+		RawAgent:   jid.RawAgent,
+		Device:     jid.Device,
+		Server:     jid.Server,
+		Integrator: jid.Integrator,
 	})
 	if device != nil {
 		client := w.createClient(device)
@@ -321,7 +321,7 @@ func (w *whatsApp) GetContactInfo(instance *Instance, jid JID) (*ContactInfo, er
 		return nil, err
 	}
 
-	profilePictureInfo, err := instance.Client.GetProfilePictureInfo(
+	profilePictureInfo, _ := instance.Client.GetProfilePictureInfo(
 		jid,
 		&whatsmeow.GetProfilePictureParams{},
 	)
