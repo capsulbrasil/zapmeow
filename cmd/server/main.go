@@ -28,10 +28,7 @@ import (
 func main() {
 	docs.SwaggerInfo.BasePath = "/api"
 
-	err := godotenv.Load()
-	if err != nil {
-		logger.Fatal("Error loading dotfile. ", err)
-	}
+	godotenv.Load()
 
 	cfg := config.Load()
 	if cfg.Environment == config.Production {
@@ -50,7 +47,7 @@ func main() {
 	queue := queue.NewQueue(cfg.RedisAddr, cfg.RedisPassword)
 
 	database := database.NewDatabase(cfg.DatabaseURL)
-	err = database.RunMigrate(
+	err := database.RunMigrate(
 		&model.Account{},
 		&model.Message{},
 	)
