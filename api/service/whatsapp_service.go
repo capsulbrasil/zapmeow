@@ -131,13 +131,13 @@ func (w *whatsAppService) GetInstance(instanceID string) (*whatsapp.Instance, er
 			}
 		case "error":
 			{
+				logger.Error("Qrcode. ", err)
 			}
 		case "rate-limit":
 			{
 				err := w.deleteInstance(instance)
 				if err != nil {
-					logger.Info("a")
-					// logger.Error("Failed to destroy instance. ", err)
+					logger.Error("Failed to destroy instance. ", err)
 				}
 				return
 			}
