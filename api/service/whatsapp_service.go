@@ -119,7 +119,6 @@ func (w *whatsAppService) GetInstance(instanceID string) (*whatsapp.Instance, er
 		switch event {
 		case "code":
 			{
-				instance.QrCodeRateLimit -= 1
 				err = w.accountService.UpdateAccount(instanceID, map[string]interface{}{
 					"QrCode":    code,
 					"Status":    "UNPAIRED",
