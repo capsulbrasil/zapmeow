@@ -226,13 +226,13 @@ func (w *whatsApp) SendAudioMessage(instance *Instance, jid JID, audioURL *datau
 	}
 	message := &waProto.Message{
 		AudioMessage: &waProto.AudioMessage{
-			Ptt:           proto.Bool(true),
-			Url:           proto.String(uploaded.URL),
+			PTT:           proto.Bool(true),
+			URL:           proto.String(uploaded.URL),
 			DirectPath:    proto.String(uploaded.DirectPath),
 			MediaKey:      uploaded.MediaKey,
 			Mimetype:      proto.String(mimitype),
-			FileEncSha256: uploaded.FileEncSHA256,
-			FileSha256:    uploaded.FileSHA256,
+			FileEncSHA256: uploaded.FileEncSHA256,
+			FileSHA256:    uploaded.FileSHA256,
 			FileLength:    proto.Uint64(uint64(len(audioURL.Data))),
 		},
 	}
@@ -246,12 +246,12 @@ func (w *whatsApp) SendImageMessage(instance *Instance, jid JID, imageURL *datau
 	}
 	message := &waProto.Message{
 		ImageMessage: &waProto.ImageMessage{
-			Url:           proto.String(uploaded.URL),
+			URL:           proto.String(uploaded.URL),
 			DirectPath:    proto.String(uploaded.DirectPath),
 			MediaKey:      uploaded.MediaKey,
 			Mimetype:      proto.String(mimitype),
-			FileEncSha256: uploaded.FileEncSHA256,
-			FileSha256:    uploaded.FileSHA256,
+			FileEncSHA256: uploaded.FileEncSHA256,
+			FileSHA256:    uploaded.FileSHA256,
 			FileLength:    proto.Uint64(uint64(len(imageURL.Data))),
 		},
 	}
@@ -267,13 +267,13 @@ func (w *whatsApp) SendDocumentMessage(
 
 	message := &waProto.Message{
 		DocumentMessage: &waProto.DocumentMessage{
-			Url:           proto.String(uploaded.URL),
+			URL:           proto.String(uploaded.URL),
 			FileName:      &filename,
 			DirectPath:    proto.String(uploaded.DirectPath),
 			MediaKey:      uploaded.MediaKey,
 			Mimetype:      proto.String(mimitype),
-			FileEncSha256: uploaded.FileEncSHA256,
-			FileSha256:    uploaded.FileSHA256,
+			FileEncSHA256: uploaded.FileEncSHA256,
+			FileSHA256:    uploaded.FileSHA256,
 			FileLength:    proto.Uint64(uint64(len(documentURL.Data))),
 		},
 	}
