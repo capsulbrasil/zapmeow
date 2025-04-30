@@ -45,7 +45,7 @@ func NewGetQrCodeHandler(
 //	@Router			/{instanceId}/qrcode [get]
 func (h *getQrCodeHandler) Handler(c *gin.Context) {
 	instanceID := c.Param("instanceId")
-	_, err := h.whatsAppService.GetInstance(instanceID)
+	instance, err := h.whatsAppService.GetInstance(instanceID)
 	if err != nil {
 		response.ErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return
@@ -63,6 +63,9 @@ func (h *getQrCodeHandler) Handler(c *gin.Context) {
 		response.ErrorResponse(c, http.StatusInternalServerError, "Account not foun")
 		return
 	}
+
+	h.whatsAppService.Logout(instance)
+	h.app.DeleteInstance(instanceID)
 
 	response.Response(c, http.StatusOK, getQrCodeResponse{
 		QrCode: account.QrCode,
