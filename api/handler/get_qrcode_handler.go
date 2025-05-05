@@ -45,7 +45,7 @@ func NewGetQrCodeHandler(
 //	@Router			/{instanceId}/qrcode [get]
 func (h *getQrCodeHandler) Handler(c *gin.Context) {
 	instanceID := c.Param("instanceId")
-	instance, err := h.whatsAppService.GetInstance(instanceID)
+	_, err := h.whatsAppService.GetInstance(instanceID)
 	if err != nil {
 		response.ErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return
@@ -62,10 +62,6 @@ func (h *getQrCodeHandler) Handler(c *gin.Context) {
 	if account == nil {
 		response.ErrorResponse(c, http.StatusInternalServerError, "Account not found")
 		return
-	}
-
-	if h.whatsAppService.IsAuthenticated(instance) {
-		h.whatsAppService.Logout(instance)
 	}
 
 	response.Response(c, http.StatusOK, getQrCodeResponse{

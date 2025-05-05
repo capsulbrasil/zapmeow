@@ -45,16 +45,16 @@ func (h *logoutHandler) Handler(c *gin.Context) {
 		return
 	}
 
-	if !h.whatsAppService.IsAuthenticated(instance) {
-		response.ErrorResponse(c, http.StatusUnauthorized, "unautenticated")
-		return
-	}
-
-	err = h.whatsAppService.Logout(instance)
-	if err != nil {
+	h.whatsAppService.Logout(instance)
+	/* if err != nil {
 		response.ErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return
-	}
+	} */
+
+	/* if !h.whatsAppService.IsAuthenticated(instance) {
+		response.ErrorResponse(c, http.StatusUnauthorized, "unautenticated")
+		return
+	} */
 
 	response.Response(c, http.StatusOK, gin.H{})
 }
