@@ -60,12 +60,13 @@ func (h *getQrCodeHandler) Handler(c *gin.Context) {
 	}
 
 	if account == nil {
-		response.ErrorResponse(c, http.StatusInternalServerError, "Account not foun")
+		response.ErrorResponse(c, http.StatusInternalServerError, "Account not found")
 		return
 	}
 
-	h.whatsAppService.Logout(instance)
-	h.app.DeleteInstance(instanceID)
+	if h.whatsAppService.IsAuthenticated(instance) {
+		h.whatsAppService.Logout(instance)
+	}
 
 	response.Response(c, http.StatusOK, getQrCodeResponse{
 		QrCode: account.QrCode,
